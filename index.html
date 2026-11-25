@@ -781,11 +781,13 @@
 
       document.getElementById('right-members-list').innerHTML = approvedVisible.map(m => {
         const col = /^#[0-9a-fA-F]{6}$/.test(m.profile_color || '') ? m.profile_color : '#9aa2b1';
+        const unread = unreadByPeer[m.id] || 0;
         return `
           <div class="member-row" data-mid="${m.id}">
             <img class="avatar-img avatar-sm" src="${esc(m.avatar_url || FALLBACK_AVATAR)}" alt="" />
-            <span style="color:${col}; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(m.username)}</span>
+            <span style="color:${col}; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">${esc(m.username)}</span>
             ${m.role === 'admin' ? '<span class="tag">admin</span>' : ''}
+            ${unread > 0 ? `<span class="notif-badge">${unread}</span>` : ''}
           </div>
         `;
       }).join('');
@@ -797,7 +799,7 @@
       renderDmList();
     }
 
-    function openMemberModal(memberId) {
+    async function openMemberModal(memberId) {
       const m = members.find(x => x.id === memberId);
       if (!m) return;
       inspectedMember = m;
@@ -838,6 +840,12 @@
         document.getElementById('modal-reject-btn').classList.toggle('hidden', !perms.can_approve_users);
       } else {
         adminBox.classList.add('hidden');
+      }
+
+      if (unreadByPeer[memberId]) {
+        delete unreadByPeer[memberId];
+        updateNotifBadges();
+        await loadMembers();
       }
 
       document.getElementById('member-modal').classList.remove('hidden');
@@ -1282,13 +1290,14 @@
 
           if (payload.eventType === 'INSERT' && m.recipient_id === session.user.id) {
             const isViewingThisThread = currentView === 'dm' && selectedDmPeer?.id === m.sender_id && !document.hidden;
+            const sender = members.find(x => x.id === m.sender_id);
             if (!isViewingThisThread) {
               unreadByPeer[m.sender_id] = (unreadByPeer[m.sender_id] || 0) + 1;
               updateNotifBadges();
               renderDmList();
-              const sender = members.find(x => x.id === m.sender_id);
-              showDmToast(sender?.username || 'Message privé', m.content, m.sender_id);
+              await loadMembers();
             }
+            showDmToast(sender?.username || 'Message privé', m.content, m.sender_id);
           }
 
           if (currentView === 'dm' && selectedDmPeer?.id === peerId) {
