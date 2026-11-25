@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Forum Public avec Panneau Admin</title>
+  <title>Forum Privé — Connexion requise</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -26,6 +26,23 @@
       line-height: 1.5;
     }
     .container { max-width: 1080px; margin: 0 auto; padding: 24px 16px; }
+    .auth-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .auth-box {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .auth-box h1 { margin-top: 0; margin-bottom: 6px; font-size: 1.5rem; }
+    .auth-box input, .auth-box button { width: 100%; margin-bottom: 10px; }
     header {
       display: flex; flex-wrap: wrap; justify-content: space-between;
       align-items: center; gap: 16px;
@@ -61,34 +78,55 @@
     .topic-item:hover, .topic-item.active { background: var(--subcard); border-color: var(--accent); }
     table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
     th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
-    #status-banner { color: var(--accent); margin-bottom: 12px; min-height: 22px; font-weight: 500; }
+    .banner { color: var(--accent); margin-bottom: 12px; min-height: 22px; font-weight: 500; }
   </style>
 </head>
 <body>
-  <div class="container">
+
+  <!-- ÉCRAN DE CONNEXION OBLIGATOIRE -->
+  <div id="guest-screen" class="auth-screen">
+    <div class="auth-box">
+      <h1>Accès au Forum</h1>
+      <p class="meta" style="margin-top:0; margin-bottom:16px;">
+        Connecte-toi ou crée un compte pour accéder aux discussions.
+      </p>
+      <div id="guest-banner" class="banner"></div>
+
+      <input type="text" id="auth-username" placeholder="Pseudo (uniquement pour l'inscription)" />
+      <input type="email" id="auth-email" placeholder="Adresse e-mail" />
+      <input type="password" id="auth-password" placeholder="Mot de passe" />
+
+      <button id="btn-login">Se connecter</button>
+      <button id="btn-signup" class="secondary">Créer un compte</button>
+    </div>
+  </div>
+
+  <!-- APPLICATION FORUM (MASQUÉE TANT QUE NON CONNECTÉ) -->
+  <div id="app-screen" class="container hidden">
     <header>
       <div>
         <h1 style="margin:0;">Mon Forum</h1>
-        <div class="meta">Comptes approuvés, rôles à permissions, mots bannis & logs</div>
+        <div class="meta">Espace membres & administration</div>
       </div>
 
-      <div id="auth-guest" class="row">
-        <input type="text" id="auth-username" placeholder="Pseudo (inscription)" />
-        <input type="email" id="auth-email" placeholder="E-mail" />
-        <input type="password" id="auth-password" placeholder="Mot de passe" />
-        <button id="btn-login">Connexion</button>
-        <button id="btn-signup" class="secondary">Inscription</button>
-      </div>
-
-      <div id="auth-user" class="row hidden">
+      <div class="row">
         <span id="current-user-label"></span>
         <button id="btn-toggle-admin" class="hidden">Panneau Admin</button>
         <button id="btn-logout" class="secondary">Déconnexion</button>
       </div>
     </header>
 
-    <div id="status-banner"></div>
+    <div id="status-banner" class="banner"></div>
 
+    <!-- MESSAGE SI COMPTE NON ENCORE VALIDÉ -->
+    <section id="pending-notice" class="card hidden">
+      <h2 style="margin-top:0;">Compte en attente de validation</h2>
+      <p class="meta" style="margin-bottom:0;">
+        Ton inscription a bien été enregistrée. Un administrateur doit valider ton accès avant que tu puisses lire et publier sur le forum.
+      </p>
+    </section>
+
+    <!-- PANNEAU ADMIN -->
     <section id="admin-panel" class="card hidden">
       <div class="row" style="justify-content:space-between; margin-bottom:10px;">
         <h2 style="margin:0;">Panneau d'administration</h2>
@@ -155,10 +193,11 @@
       </div>
     </section>
 
-    <div class="grid-forum">
+    <!-- CONTENU DU FORUM (UNIQUEMENT POUR LES COMPTES APPROUVÉS) -->
+    <div id="forum-content" class="grid-forum hidden">
       <aside class="card">
         <h2 style="margin-top:0;">Sujets</h2>
-        <div id="new-topic-box" class="hidden" style="margin-bottom:14px;">
+        <div id="new-topic-box" style="margin-bottom:14px;">
           <input type="text" id="topic-title-input" placeholder="Nouveau sujet..." style="width:100%; margin-bottom:8px;" />
           <button id="btn-create-topic" style="width:100%;">Créer le sujet</button>
         </div>
@@ -191,8 +230,10 @@
     let topics = [];
     let selectedTopicId = null;
 
-    const banner = document.getElementById('status-banner');
-    const notify = (msg) => { banner.textContent = msg || ''; };
+    const notify = (msg) => {
+      document.getElementById('status-banner').textContent = msg || '';
+      document.getElementById('guest-banner').textContent = msg || '';
+    };
     const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
 
     function hasAnyAdminPerm(p) {
@@ -218,47 +259,46 @@
       const { data } = await supabase.auth.getSession();
       session = data.session;
 
-      const guestEl = document.getElementById('auth-guest');
-      const userEl = document.getElementById('auth-user');
+      const guestScreen = document.getElementById('guest-screen');
+      const appScreen = document.getElementById('app-screen');
+      const pendingNotice = document.getElementById('pending-notice');
+      const forumContent = document.getElementById('forum-content');
       const adminBtn = document.getElementById('btn-toggle-admin');
       const adminPanel = document.getElementById('admin-panel');
-      const topicBox = document.getElementById('new-topic-box');
       const postBox = document.getElementById('new-post-box');
 
       if (!session) {
         profile = null;
         perms = {};
-        guestEl.classList.remove('hidden');
-        userEl.classList.add('hidden');
-        adminBtn.classList.add('hidden');
-        adminPanel.classList.add('hidden');
-        topicBox.classList.add('hidden');
-        postBox.classList.add('hidden');
+        guestScreen.classList.remove('hidden');
+        appScreen.classList.add('hidden');
         return;
       }
+
+      guestScreen.classList.add('hidden');
+      appScreen.classList.remove('hidden');
 
       const { data: p } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
       profile = p;
       const roleDef = roles.find(r => r.name === profile?.role) || {};
       perms = profile?.status === 'approved' ? roleDef : {};
 
-      guestEl.classList.add('hidden');
-      userEl.classList.remove('hidden');
-
       const statusBadge = profile?.status === 'approved'
         ? ''
-        : `<span class="badge ${profile?.status}">${profile?.status === 'pending' ? 'En attente de validation' : 'Compte refusé'}</span>`;
+        : `<span class="badge ${profile?.status}">${profile?.status === 'pending' ? 'En attente' : 'Refusé'}</span>`;
 
       document.getElementById('current-user-label').innerHTML =
         `<strong>${esc(profile?.username)}</strong> <span class="badge">${esc(profile?.role)}</span> ${statusBadge}`;
 
       if (profile?.status === 'approved') {
-        topicBox.classList.remove('hidden');
+        pendingNotice.classList.add('hidden');
+        forumContent.classList.remove('hidden');
         if (selectedTopicId) postBox.classList.remove('hidden');
+        await loadTopics();
       } else {
-        topicBox.classList.add('hidden');
+        pendingNotice.classList.remove('hidden');
+        forumContent.classList.add('hidden');
         postBox.classList.add('hidden');
-        notify('Ton compte est en attente de validation par un administrateur avant de pouvoir publier.');
       }
 
       if (hasAnyAdminPerm(perms)) {
@@ -395,7 +435,10 @@
 
       const currentTopic = topics.find(t => t.id === selectedTopicId);
       document.getElementById('selected-topic-title').textContent = currentTopic ? currentTopic.title : 'Sélectionne un sujet';
-      if (selectedTopicId) await loadPosts(selectedTopicId);
+      if (selectedTopicId) {
+        document.getElementById('new-post-box').classList.remove('hidden');
+        await loadPosts(selectedTopicId);
+      }
     }
 
     async function loadPosts(topicId) {
@@ -491,7 +534,9 @@
       const password = document.getElementById('auth-password').value;
       if (!username || !email || !password) return notify('Remplis tous les champs.');
       const { error } = await supabase.auth.signUp({ email, password, options: { data: { username } } });
-      notify(error ? 'Erreur : ' + error.message : 'Compte créé ! En attente de validation par un admin.');
+      if (error) return notify('Erreur : ' + error.message);
+      notify('Compte créé ! Connecte-toi ou attends la validation d’un administrateur.');
+      await refreshUser();
     });
 
     document.getElementById('btn-login').addEventListener('click', async () => {
@@ -499,16 +544,14 @@
       const password = document.getElementById('auth-password').value;
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return notify('Erreur : ' + error.message);
-      notify('Connecté.');
+      notify('');
       await refreshUser();
-      await loadTopics();
     });
 
     document.getElementById('btn-logout').addEventListener('click', async () => {
       await supabase.auth.signOut();
       notify('Déconnecté.');
       await refreshUser();
-      await loadTopics();
     });
 
     document.getElementById('btn-create-topic').addEventListener('click', async () => {
@@ -534,7 +577,6 @@
 
     await loadRoles();
     await refreshUser();
-    await loadTopics();
   </script>
 </body>
 </html>
