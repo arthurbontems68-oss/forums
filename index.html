@@ -1118,6 +1118,9 @@
         .order('created_at', { ascending: true });
 
       const thread = document.getElementById('dm-thread');
+      const sig = (data || []).map(x => `${x.id}:${x.content}`).join('|');
+      if (thread.dataset.lastSig === sig) return;
+      thread.dataset.lastSig = sig;
       thread.innerHTML = (data || []).map(m => {
         const mine = m.sender_id === session.user.id;
         return `
@@ -1251,8 +1254,9 @@
 
     function subscribeRealtime() {
       if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+      if (window.__pollInterval) clearInterval(window.__pollInterval);
       realtimeChannel = supabase
-        .channel('discord-general-live')
+        .channel('discord-sync-' + Date.now())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, () => {
           if (me?.status === 'approved' && !me?.is_banned) loadChat();
         })
@@ -1304,7 +1308,33 @@
             await loadDmThread();
           }
         })
-        .subscribe();
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            setNotice('Realtime interrompu : mode secours actif.', true);
+          }
+        });
+
+      // Secours léger toutes les 3s pour les DM et demandes si l'événement Realtime n'arrive pas
+      window.__pollInterval = setInterval(async () => {
+        if (!session || !me || me.status !== 'approved' || me.is_banned) return;
+        const prevIds = new Set(dmRequests.map(r => `${r.id}:${r.status}`));
+        const { data: reqs } = await supabase
+          .from('dm_requests')
+          .select('*')
+          .or(`requester_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`);
+        if (reqs) {
+          const changed = reqs.some(r => !prevIds.has(`${r.id}:${r.status}`)) || reqs.length !== dmRequests.length;
+          if (changed) {
+            dmRequests = reqs;
+            updateNotifBadges();
+            renderDmList();
+            if (currentView === 'dm' && selectedDmPeer) renderDmRequestBanner();
+          }
+        }
+        if (currentView === 'dm' && selectedDmPeer) {
+          await loadDmThread();
+        }
+      }, 3000);
     }
 
     async function refreshSession(keepView = false) {
@@ -1317,6 +1347,7 @@
         document.getElementById('guest-screen').classList.remove('hidden');
         document.getElementById('app-screen').classList.add('hidden');
         if (realtimeChannel) { supabase.removeChannel(realtimeChannel); realtimeChannel = null; }
+        if (window.__pollInterval) { clearInterval(window.__pollInterval); window.__pollInterval = null; }
         return;
       }
 
