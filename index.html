@@ -247,6 +247,35 @@
     .member-row:hover { background: var(--panel-2); }
 
     /* AVATAR & BANNER */
+    .avatar-wrap {
+      position: relative;
+      display: inline-flex;
+      flex-shrink: 0;
+    }
+    .presence-dot {
+      position: absolute;
+      right: -1px;
+      bottom: -1px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--sidebar);
+      background: #6e7681;
+    }
+    .presence-dot.online {
+      background: #3fb950;
+    }
+    .presence-dot.offline {
+      background: #6e7681;
+    }
+    .presence-dot.lg {
+      width: 15px;
+      height: 15px;
+      right: 1px;
+      bottom: 1px;
+      border-width: 2.5px;
+      border-color: var(--panel);
+    }
     .avatar-img {
       width: 34px; height: 34px; border-radius: 50%;
       object-fit: cover; background: var(--panel-2);
@@ -638,6 +667,7 @@
 
         <div style="margin-top:8px;">
           <strong id="modal-username" style="font-size:16px;"></strong>
+          <span id="modal-presence-status" class="muted" style="margin-left:6px; font-weight:600;"></span>
           <span id="modal-role-tag" class="tag"></span>
           <span id="modal-ban-tag" class="tag banned hidden">Banni</span>
         </div>
@@ -685,7 +715,27 @@
     let inspectedMember = null;
     let currentView = 'chat';
     let realtimeChannel = null;
+    let presenceChannel = null;
+    let onlineUserIds = new Set();
     let toastPeerId = null;
+
+    function isUserOnline(userId) {
+      if (!userId) return false;
+      if (session && userId === session.user.id) return true;
+      return onlineUserIds.has(userId);
+    }
+
+    function renderAvatarWithPresence(avatarUrl, userId, sizeClass = 'avatar-sm', isLarge = false) {
+      const online = isUserOnline(userId);
+      const dotClass = `presence-dot ${online ? 'online' : 'offline'} ${isLarge ? 'lg' : ''}`;
+      const title = online ? 'En ligne' : 'Hors ligne';
+      return `
+        <span class="avatar-wrap" title="${title}">
+          <img class="avatar-img ${sizeClass}" src="${esc(avatarUrl || FALLBACK_AVATAR)}" alt="" />
+          <span class="${dotClass}"></span>
+        </span>
+      `;
+    }
 
     const esc = (s) => {
       const d = document.createElement('div');
@@ -836,13 +886,24 @@
       const approvedVisible = members.filter(m => m.status === 'approved' && !m.is_banned);
       document.getElementById('members-count').textContent = approvedVisible.length;
 
-      document.getElementById('right-members-list').innerHTML = approvedVisible.map(m => {
+      const sortedApproved = [...approvedVisible].sort((a, b) => {
+        const oa = isUserOnline(a.id) ? 0 : 1;
+        const ob = isUserOnline(b.id) ? 0 : 1;
+        if (oa !== ob) return oa - ob;
+        return (a.username || '').localeCompare(b.username || '', 'fr');
+      });
+      const onlineCount = sortedApproved.filter(m => isUserOnline(m.id)).length;
+      document.getElementById('members-count').textContent = `${onlineCount} en ligne / ${sortedApproved.length}`;
+
+      document.getElementById('right-members-list').innerHTML = sortedApproved.map(m => {
         const col = /^#[0-9a-fA-F]{6}$/.test(m.profile_color || '') ? m.profile_color : '#9aa2b1';
         const unread = unreadByPeer[m.id] || 0;
+        const on = isUserOnline(m.id);
         return `
           <div class="member-row" data-mid="${m.id}">
-            <img class="avatar-img avatar-sm" src="${esc(m.avatar_url || FALLBACK_AVATAR)}" alt="" />
+            ${renderAvatarWithPresence(m.avatar_url, m.id, 'avatar-sm', false)}
             <span style="color:${col}; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">${esc(m.username)}</span>
+            <span class="muted" style="font-size:11px;">${on ? 'En ligne' : 'Hors ligne'}</span>
             ${m.role === 'admin' ? '<span class="tag">admin</span>' : ''}
             ${unread > 0 ? `<span class="notif-badge">${unread}</span>` : ''}
           </div>
@@ -867,6 +928,10 @@
 
       document.getElementById('modal-avatar').src = m.avatar_url || FALLBACK_AVATAR;
       document.getElementById('modal-username').textContent = m.username;
+      const modalOnline = isUserOnline(m.id);
+      const mpEl = document.getElementById('modal-presence-status');
+      mpEl.textContent = modalOnline ? '● En ligne' : '○ Hors ligne';
+      mpEl.style.color = modalOnline ? '#7ee787' : '#9aa2b1';
       document.getElementById('modal-role-tag').textContent = m.role || 'member';
       document.getElementById('modal-ban-tag').classList.toggle('hidden', !m.is_banned);
       document.getElementById('modal-bio').textContent = m.bio || 'Aucune biographie.';
@@ -1040,10 +1105,12 @@
         const senderAlert = unread > 0
           ? `<span class="dm-sender-alert">● ${unread} nouveau${unread > 1 ? 'x' : ''}</span>`
           : '';
+        const on = isUserOnline(u.id);
         return `
           <div class="member-row ${selectedDmPeer?.id === u.id ? 'channel-active-row' : ''} ${unread > 0 ? 'has-unread' : ''}" data-uid="${u.id}">
-            <img class="avatar-img avatar-sm" src="${esc(u.avatar_url || FALLBACK_AVATAR)}" alt="" />
+            ${renderAvatarWithPresence(u.avatar_url, u.id, 'avatar-sm', false)}
             <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:${unread > 0 ? '700' : '400'};">${esc(u.username)}</span>
+            <span class="muted" style="font-size:11px; color:${on ? '#7ee787' : '#9aa2b1'};">${on ? 'En ligne' : 'Hors ligne'}</span>
             ${senderAlert}
             ${statusTag}
           </div>
@@ -1230,7 +1297,9 @@
       delete unreadByPeer[selectedDmPeer.id];
       updateNotifBadges();
 
-      document.getElementById('dm-peer-header').textContent = `Message privé — ${selectedDmPeer.username}`;
+      const peerOnline = isUserOnline(selectedDmPeer.id);
+      document.getElementById('dm-peer-header').innerHTML =
+        `Message privé — ${esc(selectedDmPeer.username)} <span class="muted" style="margin-left:6px; color:${peerOnline ? '#7ee787' : '#9aa2b1'};">${peerOnline ? '● En ligne' : '○ Hors ligne'}</span>`;
       renderDmRequestBanner();
 
       const { data } = await supabase
@@ -1433,6 +1502,60 @@
       b.style.backgroundColor = /^#[0-9a-fA-F]{6}$/.test(me.profile_color || '') ? me.profile_color : '#252a36';
     }
 
+    function startPresenceTracking() {
+      if (presenceChannel) {
+        supabase.removeChannel(presenceChannel);
+        presenceChannel = null;
+      }
+      if (!session || !me) return;
+
+      onlineUserIds = new Set([session.user.id]);
+
+      presenceChannel = supabase.channel('forum-online-presence', {
+        config: { presence: { key: session.user.id } }
+      });
+
+      const syncPresence = () => {
+        const state = presenceChannel.presenceState();
+        const active = new Set();
+        if (session?.user?.id) active.add(session.user.id);
+        for (const key of Object.keys(state || {})) {
+          active.add(key);
+        }
+        onlineUserIds = active;
+        if (me?.status === 'approved' && !me?.is_banned) {
+          loadMembers().catch(() => {});
+          if (currentView === 'dm' && selectedDmPeer) {
+            document.getElementById('dm-peer-header').innerHTML =
+              `Message privé — ${esc(selectedDmPeer.username)} <span class="muted">(${isUserOnline(selectedDmPeer.id) ? '🟢 En ligne' : '⚫ Hors ligne'})</span>`;
+          }
+          if (inspectedMember) {
+            const stEl = document.getElementById('modal-presence-status');
+            if (stEl) {
+              const on = isUserOnline(inspectedMember.id);
+              stEl.textContent = on ? '🟢 En ligne' : '⚫ Hors ligne';
+              stEl.style.color = on ? '#7ee787' : '#9aa2b1';
+            }
+          }
+        }
+      };
+
+      presenceChannel
+        .on('presence', { event: 'sync' }, syncPresence)
+        .on('presence', { event: 'join' }, syncPresence)
+        .on('presence', { event: 'leave' }, syncPresence)
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await presenceChannel.track({
+              user_id: session.user.id,
+              username: me.username || '',
+              online_at: new Date().toISOString()
+            });
+            syncPresence();
+          }
+        });
+    }
+
     function subscribeRealtime() {
       if (realtimeChannel) supabase.removeChannel(realtimeChannel);
       if (window.__pollInterval) clearInterval(window.__pollInterval);
@@ -1569,7 +1692,9 @@
         document.getElementById('guest-screen').classList.remove('hidden');
         document.getElementById('app-screen').classList.add('hidden');
         if (realtimeChannel) { supabase.removeChannel(realtimeChannel); realtimeChannel = null; }
+        if (presenceChannel) { supabase.removeChannel(presenceChannel); presenceChannel = null; }
         if (window.__pollInterval) { clearInterval(window.__pollInterval); window.__pollInterval = null; }
+        onlineUserIds = new Set();
         return;
       }
 
@@ -1614,6 +1739,7 @@
         await loadChat();
       }
       if (!realtimeChannel) subscribeRealtime();
+      if (!presenceChannel) startPresenceTracking();
     }
 
     async function uploadAsset(file, kind) {
