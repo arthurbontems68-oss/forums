@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Forum Privé — Connexion requise</title>
+  <title>Forum Privé — Profils & DM</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -25,7 +25,7 @@
       color: var(--text);
       line-height: 1.5;
     }
-    .container { max-width: 1080px; margin: 0 auto; padding: 24px 16px; }
+    .container { max-width: 1120px; margin: 0 auto; padding: 24px 16px; }
     .auth-screen {
       min-height: 100vh;
       display: flex;
@@ -73,9 +73,26 @@
     .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
     .tab-btn.active { outline: 2px solid var(--accent); }
     .grid-forum { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
-    @media (max-width: 780px) { .grid-forum { grid-template-columns: 1fr; } }
-    .topic-item { padding: 10px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
-    .topic-item:hover, .topic-item.active { background: var(--subcard); border-color: var(--accent); }
+    .grid-dm { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
+    @media (max-width: 780px) {
+      .grid-forum, .grid-dm { grid-template-columns: 1fr; }
+    }
+    .topic-item, .user-item {
+      padding: 10px; border-radius: 8px; cursor: pointer;
+      border: 1px solid transparent; margin-bottom: 6px;
+    }
+    .topic-item:hover, .topic-item.active, .user-item:hover, .user-item.active {
+      background: var(--subcard); border-color: var(--accent);
+    }
+    .avatar-dot {
+      display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+      margin-right: 6px; vertical-align: middle;
+    }
+    .dm-msg {
+      padding: 10px 12px; border-radius: 8px; margin-bottom: 8px;
+      background: var(--subcard); border: 1px solid var(--border);
+    }
+    .dm-msg.mine { border-color: var(--accent); }
     table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
     th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
     .banner { color: var(--accent); margin-bottom: 12px; min-height: 22px; font-weight: 500; }
@@ -101,16 +118,19 @@
     </div>
   </div>
 
-  <!-- APPLICATION FORUM (MASQUÉE TANT QUE NON CONNECTÉ) -->
+  <!-- APPLICATION FORUM -->
   <div id="app-screen" class="container hidden">
     <header>
       <div>
         <h1 style="margin:0;">Mon Forum</h1>
-        <div class="meta">Espace membres & administration</div>
+        <div class="meta">Discussions, profils personnalisés & messages privés</div>
       </div>
 
       <div class="row">
         <span id="current-user-label"></span>
+        <button id="btn-nav-forum" class="secondary">Forum</button>
+        <button id="btn-nav-dm" class="secondary">Messages (DM)</button>
+        <button id="btn-nav-profile" class="secondary">Mon Profil</button>
         <button id="btn-toggle-admin" class="hidden">Panneau Admin</button>
         <button id="btn-logout" class="secondary">Déconnexion</button>
       </div>
@@ -122,8 +142,45 @@
     <section id="pending-notice" class="card hidden">
       <h2 style="margin-top:0;">Compte en attente de validation</h2>
       <p class="meta" style="margin-bottom:0;">
-        Ton inscription a bien été enregistrée. Un administrateur doit valider ton accès avant que tu puisses lire et publier sur le forum.
+        Ton inscription a bien été enregistrée. Un administrateur doit valider ton accès avant que tu puisses accéder au forum, aux DM et à la personnalisation.
       </p>
+    </section>
+
+    <!-- PERSONNALISATION DU PROFIL -->
+    <section id="profile-panel" class="card hidden">
+      <h2 style="margin-top:0;">Personnaliser mon profil</h2>
+      <div class="row" style="margin-bottom:12px;">
+        <label class="meta">Pseudo :
+          <input type="text" id="profile-username-input" placeholder="Ton pseudo" />
+        </label>
+        <label class="meta">Couleur du badge :
+          <input type="color" id="profile-color-input" value="#38bdf8" />
+        </label>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label class="meta" style="display:block; margin-bottom:4px;">Bio :</label>
+        <textarea id="profile-bio-input" rows="3" placeholder="Présente-toi en quelques mots..." style="width:100%;"></textarea>
+      </div>
+      <button id="btn-save-profile">Enregistrer mon profil</button>
+    </section>
+
+    <!-- MESSAGES PRIVÉS (DM) -->
+    <section id="dm-panel" class="card hidden">
+      <h2 style="margin-top:0;">Messages privés (DM)</h2>
+      <div class="grid-dm">
+        <div>
+          <div class="meta" style="margin-bottom:8px;">Membres approuvés</div>
+          <div id="dm-users-list"></div>
+        </div>
+        <div>
+          <h3 id="dm-chat-title" style="margin-top:0;">Choisis un membre pour discuter</h3>
+          <div id="dm-messages-box" style="max-height:340px; overflow-y:auto; margin-bottom:12px;"></div>
+          <div id="dm-send-box" class="row hidden">
+            <input type="text" id="dm-input" placeholder="Écris un message privé..." style="flex:1;" />
+            <button id="btn-send-dm">Envoyer</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- PANNEAU ADMIN -->
@@ -145,6 +202,7 @@
           <thead>
             <tr>
               <th>Pseudo</th>
+              <th>Bio</th>
               <th>Statut</th>
               <th>Validation</th>
               <th>Rôle</th>
@@ -193,7 +251,7 @@
       </div>
     </section>
 
-    <!-- CONTENU DU FORUM (UNIQUEMENT POUR LES COMPTES APPROUVÉS) -->
+    <!-- CONTENU DU FORUM -->
     <div id="forum-content" class="grid-forum hidden">
       <aside class="card">
         <h2 style="margin-top:0;">Sujets</h2>
@@ -219,7 +277,7 @@
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
     const SUPABASE_URL = 'https://sdgkdiybppvsclgakdem.supabase.co';
-    const SUPABASE_ANON_KEY = 'TA_CLE_PUBLISHABLE_COPIEE';
+    const SUPABASE_ANON_KEY = 'sb_publishable_eSAcsSsTMF9p5jBUa0tIkA_XnsH3nxP';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -229,6 +287,8 @@
     let roles = [];
     let topics = [];
     let selectedTopicId = null;
+    let selectedDmUser = null;
+    let approvedMembers = [];
 
     const notify = (msg) => {
       document.getElementById('status-banner').textContent = msg || '';
@@ -236,8 +296,25 @@
     };
     const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
 
+    function applyAccentColor(color) {
+      const hex = /^#[0-9a-fA-F]{6}$/.test(color || '') ? color : '#38bdf8';
+      document.documentElement.style.setProperty('--accent', hex);
+    }
+
+    function renderAuthorTag(p) {
+      const color = /^#[0-9a-fA-F]{6}$/.test(p?.profile_color || '') ? p.profile_color : '#38bdf8';
+      const bioAttr = p?.bio ? `title="${esc(p.bio)}"` : '';
+      return `<span class="avatar-dot" style="background:${color};"></span><strong ${bioAttr}>${esc(p?.username)}</strong><span class="badge" style="border-color:${color}; color:${color};">${esc(p?.role)}</span>`;
+    }
+
     function hasAnyAdminPerm(p) {
       return !!(p.can_approve_users || p.can_manage_roles || p.can_manage_banned_words || p.can_view_logs);
+    }
+
+    function switchSection(sectionName) {
+      document.getElementById('forum-content').classList.toggle('hidden', sectionName !== 'forum');
+      document.getElementById('dm-panel').classList.toggle('hidden', sectionName !== 'dm');
+      document.getElementById('profile-panel').classList.toggle('hidden', sectionName !== 'profile');
     }
 
     async function loadRoles() {
@@ -263,13 +340,15 @@
       const appScreen = document.getElementById('app-screen');
       const pendingNotice = document.getElementById('pending-notice');
       const forumContent = document.getElementById('forum-content');
+      const dmPanel = document.getElementById('dm-panel');
+      const profilePanel = document.getElementById('profile-panel');
       const adminBtn = document.getElementById('btn-toggle-admin');
       const adminPanel = document.getElementById('admin-panel');
-      const postBox = document.getElementById('new-post-box');
 
       if (!session) {
         profile = null;
         perms = {};
+        applyAccentColor('#38bdf8');
         guestScreen.classList.remove('hidden');
         appScreen.classList.add('hidden');
         return;
@@ -280,6 +359,8 @@
 
       const { data: p } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
       profile = p;
+      applyAccentColor(profile?.profile_color);
+
       const roleDef = roles.find(r => r.name === profile?.role) || {};
       perms = profile?.status === 'approved' ? roleDef : {};
 
@@ -288,17 +369,20 @@
         : `<span class="badge ${profile?.status}">${profile?.status === 'pending' ? 'En attente' : 'Refusé'}</span>`;
 
       document.getElementById('current-user-label').innerHTML =
-        `<strong>${esc(profile?.username)}</strong> <span class="badge">${esc(profile?.role)}</span> ${statusBadge}`;
+        `${renderAuthorTag(profile)} ${statusBadge}`;
 
       if (profile?.status === 'approved') {
         pendingNotice.classList.add('hidden');
-        forumContent.classList.remove('hidden');
-        if (selectedTopicId) postBox.classList.remove('hidden');
+        document.getElementById('profile-username-input').value = profile.username || '';
+        document.getElementById('profile-bio-input').value = profile.bio || '';
+        document.getElementById('profile-color-input').value = profile.profile_color || '#38bdf8';
+        switchSection('forum');
         await loadTopics();
       } else {
         pendingNotice.classList.remove('hidden');
         forumContent.classList.add('hidden');
-        postBox.classList.add('hidden');
+        dmPanel.classList.add('hidden');
+        profilePanel.classList.add('hidden');
       }
 
       if (hasAnyAdminPerm(perms)) {
@@ -316,6 +400,71 @@
       document.getElementById('nav-tab-roles').classList.toggle('hidden', !perms.can_manage_roles);
       document.getElementById('nav-tab-words').classList.toggle('hidden', !perms.can_manage_banned_words);
       document.getElementById('nav-tab-logs').classList.toggle('hidden', !perms.can_view_logs);
+    }
+
+    async function loadDmMembers() {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, username, role, bio, profile_color')
+        .eq('status', 'approved')
+        .neq('id', session.user.id)
+        .order('username');
+
+      approvedMembers = data || [];
+      const listEl = document.getElementById('dm-users-list');
+      if (approvedMembers.length === 0) {
+        listEl.innerHTML = '<div class="meta">Aucun autre membre approuvé pour le moment.</div>';
+        return;
+      }
+
+      listEl.innerHTML = approvedMembers.map(u => `
+        <div class="user-item ${selectedDmUser?.id === u.id ? 'active' : ''}" data-uid="${u.id}">
+          <div>${renderAuthorTag(u)}</div>
+          <div class="meta">${esc(u.bio || 'Aucune bio')}</div>
+        </div>
+      `).join('');
+
+      listEl.querySelectorAll('.user-item').forEach(el => {
+        el.addEventListener('click', async () => {
+          selectedDmUser = approvedMembers.find(m => m.id === el.dataset.uid) || null;
+          await loadDmMembers();
+          if (selectedDmUser) await loadDmConversation();
+        });
+      });
+    }
+
+    async function loadDmConversation() {
+      if (!selectedDmUser) return;
+      document.getElementById('dm-chat-title').innerHTML = `Discussion avec ${renderAuthorTag(selectedDmUser)}`;
+      document.getElementById('dm-send-box').classList.remove('hidden');
+
+      const { data, error } = await supabase
+        .from('direct_messages')
+        .select('id, sender_id, recipient_id, content, created_at')
+        .or(`and(sender_id.eq.${session.user.id},recipient_id.eq.${selectedDmUser.id}),and(sender_id.eq.${selectedDmUser.id},recipient_id.eq.${session.user.id})`)
+        .order('created_at', { ascending: true });
+
+      const box = document.getElementById('dm-messages-box');
+      if (error) {
+        box.innerHTML = `<div class="meta">Erreur DM : ${esc(error.message)}</div>`;
+        return;
+      }
+      if (!data || data.length === 0) {
+        box.innerHTML = '<div class="meta">Aucun message privé échangé pour l’instant.</div>';
+        return;
+      }
+
+      box.innerHTML = data.map(m => {
+        const mine = m.sender_id === session.user.id;
+        const senderName = mine ? profile.username : selectedDmUser.username;
+        return `
+          <div class="dm-msg ${mine ? 'mine' : ''}">
+            <div class="meta"><strong>${esc(senderName)}</strong> · ${new Date(m.created_at).toLocaleString('fr-FR')}</div>
+            <div>${esc(m.content)}</div>
+          </div>
+        `;
+      }).join('');
+      box.scrollTop = box.scrollHeight;
     }
 
     async function loadAdminData() {
@@ -336,7 +485,8 @@
 
           return `
             <tr>
-              <td><strong>${esc(u.username)}</strong></td>
+              <td>${renderAuthorTag(u)}</td>
+              <td class="meta">${esc(u.bio || '-')}</td>
               <td><span class="badge ${u.status}">${esc(u.status)}</span></td>
               <td class="row">${approvalBtns}</td>
               <td>${roleSelect}</td>
@@ -346,22 +496,18 @@
 
         tbody.querySelectorAll('.status-btn').forEach(btn => {
           btn.addEventListener('click', async () => {
-            const uid = btn.dataset.uid;
-            const status = btn.dataset.status;
-            const { error } = await supabase.from('profiles').update({ status }).eq('id', uid);
+            const { error } = await supabase.from('profiles').update({ status: btn.dataset.status }).eq('id', btn.dataset.uid);
             if (error) return notify('Erreur : ' + error.message);
-            notify(`Statut mis à jour (${status}).`);
+            notify(`Statut mis à jour (${btn.dataset.status}).`);
             await loadAdminData();
           });
         });
 
         tbody.querySelectorAll('.user-role-sel').forEach(sel => {
           sel.addEventListener('change', async () => {
-            const uid = sel.dataset.uid;
-            const role = sel.value;
-            const { error } = await supabase.from('profiles').update({ role }).eq('id', uid);
+            const { error } = await supabase.from('profiles').update({ role: sel.value }).eq('id', sel.dataset.uid);
             if (error) return notify('Erreur : ' + error.message);
-            notify(`Rôle mis à jour (${role}).`);
+            notify(`Rôle mis à jour (${sel.value}).`);
             await refreshUser();
             await loadAdminData();
           });
@@ -408,7 +554,7 @@
     async function loadTopics() {
       const { data } = await supabase
         .from('topics')
-        .select('id, title, created_at, author_id, profiles(username, role)')
+        .select('id, title, created_at, author_id, profiles(username, role, bio, profile_color)')
         .order('created_at', { ascending: false });
 
       topics = data || [];
@@ -422,7 +568,7 @@
       listEl.innerHTML = topics.map(t => `
         <div class="topic-item ${t.id === selectedTopicId ? 'active' : ''}" data-tid="${t.id}">
           <div><strong>${esc(t.title)}</strong></div>
-          <div class="meta">par ${esc(t.profiles?.username)} <span class="badge">${esc(t.profiles?.role)}</span></div>
+          <div class="meta">par ${renderAuthorTag(t.profiles)}</div>
         </div>
       `).join('');
 
@@ -444,7 +590,7 @@
     async function loadPosts(topicId) {
       const { data } = await supabase
         .from('posts')
-        .select('id, content, created_at, author_id, profiles(username, role)')
+        .select('id, content, created_at, author_id, profiles(username, role, bio, profile_color)')
         .eq('topic_id', topicId)
         .order('created_at', { ascending: true });
 
@@ -460,12 +606,12 @@
           <div class="card" style="background:var(--subcard); margin-bottom:10px;">
             <div class="row" style="justify-content:space-between; margin-bottom:6px;">
               <div>
-                <strong>${esc(p.profiles?.username)}</strong>
-                <span class="badge">${esc(p.profiles?.role)}</span>
+                ${renderAuthorTag(p.profiles)}
                 <span class="meta">· ${new Date(p.created_at).toLocaleString('fr-FR')}</span>
               </div>
               ${canDel ? `<button class="danger sm del-post" data-pid="${p.id}">Supprimer</button>` : ''}
             </div>
+            ${p.profiles?.bio ? `<div class="meta" style="margin-bottom:6px;">${esc(p.profiles.bio)}</div>` : ''}
             <div>${esc(p.content)}</div>
           </div>
         `;
@@ -480,6 +626,52 @@
         });
       });
     }
+
+    document.getElementById('btn-nav-forum').addEventListener('click', async () => {
+      if (profile?.status !== 'approved') return;
+      switchSection('forum');
+      await loadTopics();
+    });
+
+    document.getElementById('btn-nav-dm').addEventListener('click', async () => {
+      if (profile?.status !== 'approved') return;
+      switchSection('dm');
+      await loadDmMembers();
+      if (selectedDmUser) await loadDmConversation();
+    });
+
+    document.getElementById('btn-nav-profile').addEventListener('click', () => {
+      if (profile?.status !== 'approved') return;
+      switchSection('profile');
+    });
+
+    document.getElementById('btn-save-profile').addEventListener('click', async () => {
+      const username = document.getElementById('profile-username-input').value.trim();
+      const bio = document.getElementById('profile-bio-input').value.trim();
+      const profile_color = document.getElementById('profile-color-input').value;
+      if (!username) return notify('Le pseudo ne peut pas être vide.');
+      const { error } = await supabase
+        .from('profiles')
+        .update({ username, bio, profile_color })
+        .eq('id', session.user.id);
+      if (error) return notify('Erreur profil : ' + error.message);
+      notify('Profil mis à jour !');
+      await refreshUser();
+      switchSection('profile');
+    });
+
+    document.getElementById('btn-send-dm').addEventListener('click', async () => {
+      const content = document.getElementById('dm-input').value.trim();
+      if (!content || !selectedDmUser) return;
+      const { error } = await supabase.from('direct_messages').insert({
+        sender_id: session.user.id,
+        recipient_id: selectedDmUser.id,
+        content
+      });
+      if (error) return notify('Erreur DM : ' + error.message);
+      document.getElementById('dm-input').value = '';
+      await loadDmConversation();
+    });
 
     document.getElementById('btn-toggle-admin').addEventListener('click', async () => {
       const panel = document.getElementById('admin-panel');
