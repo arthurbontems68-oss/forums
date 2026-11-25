@@ -406,7 +406,8 @@
       border: 1px solid var(--border); border-radius: 5px;
       padding: 7px 10px;
     }
-    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+    input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+    button:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
     button {
       font: inherit; font-size: 13px; font-weight: 500;
       background: var(--accent); color: #fff;
@@ -513,18 +514,18 @@
 
   <!-- ÉCRAN DE CONNEXION OBLIGATOIRE -->
   <div id="guest-screen" class="auth-wrap">
-    <div class="auth-card">
+    <form id="auth-form" class="auth-card" novalidate>
       <h1>Connexion au forum</h1>
       <div class="muted">Identifie-toi ou crée un compte pour accéder au salon # général.</div>
-      <div id="guest-notice" class="notice" style="margin-top:8px;"></div>
+      <div id="guest-notice" class="notice" style="margin-top:8px; white-space:normal; overflow:visible;"></div>
 
-      <input type="text" id="auth-username" placeholder="Pseudo (inscription uniquement)" />
-      <input type="email" id="auth-email" placeholder="Adresse e-mail" />
-      <input type="password" id="auth-password" placeholder="Mot de passe" />
+      <input type="text" id="auth-username" placeholder="Pseudo (inscription uniquement)" autocomplete="username" />
+      <input type="email" id="auth-email" placeholder="Adresse e-mail" autocomplete="email" inputmode="email" />
+      <input type="password" id="auth-password" placeholder="Mot de passe" autocomplete="current-password" />
 
-      <button type="button" id="btn-login">Se connecter</button>
+      <button type="submit" id="btn-login">Se connecter</button>
       <button type="button" id="btn-signup" class="ghost">Créer un compte</button>
-    </div>
+    </form>
   </div>
 
   <!-- APPLICATION -->
@@ -1959,14 +1960,24 @@
     }, { passive: false });
 
     let isLoggingIn = false;
+    let lastLoginAttemptAt = 0;
+
     async function handleLoginSubmit() {
-      if (isLoggingIn) return;
+      const now = Date.now();
+      if (isLoggingIn || now - lastLoginAttemptAt < 400) return;
+      lastLoginAttemptAt = now;
+
       const btn = document.getElementById('btn-login');
       const email = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-password').value;
+
       if (!email || !password) {
-        return setNotice('Remplis ton e-mail et ton mot de passe.', true);
+        return setNotice('Remplis ton adresse e-mail complète et ton mot de passe.', true);
       }
+      if (!email.includes('@') || !email.includes('.')) {
+        return setNotice("L'adresse e-mail semble incomplète (ex. nom@gmail.com).", true);
+      }
+
       isLoggingIn = true;
       if (btn) {
         btn.disabled = true;
@@ -1976,7 +1987,10 @@
       try {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
-          setNotice(error.message, true);
+          const msg = error.message === 'Invalid login credentials'
+            ? 'E-mail ou mot de passe incorrect.'
+            : error.message;
+          setNotice(msg, true);
           return;
         }
         setNotice('');
@@ -1992,25 +2006,34 @@
       }
     }
 
+    const authFormEl = document.getElementById('auth-form');
+    if (authFormEl) {
+      authFormEl.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleLoginSubmit();
+      });
+    }
+
     const loginBtnEl = document.getElementById('btn-login');
     loginBtnEl.addEventListener('click', (e) => {
       e.preventDefault();
       handleLoginSubmit();
     });
     loginBtnEl.addEventListener('touchend', (e) => {
-      e.preventDefault();
       if (document.activeElement && typeof document.activeElement.blur === 'function') {
         document.activeElement.blur();
       }
       handleLoginSubmit();
-    }, { passive: false });
+    }, { passive: true });
 
-    document.getElementById('auth-password').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        handleLoginSubmit();
-      }
-    });
+    for (const fieldId of ['auth-username', 'auth-email', 'auth-password']) {
+      document.getElementById(fieldId)?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+          e.preventDefault();
+          handleLoginSubmit();
+        }
+      });
+    }
 
     document.getElementById('btn-logout').addEventListener('click', async () => {
       await supabase.auth.signOut();
