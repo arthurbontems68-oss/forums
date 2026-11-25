@@ -515,15 +515,15 @@
   <!-- ÉCRAN DE CONNEXION OBLIGATOIRE -->
   <div id="guest-screen" class="auth-wrap">
     <form id="auth-form" class="auth-card" novalidate>
-      <h1>Connexion au forum</h1>
+      <h1>Connexion au forum <span class="tag">v13</span></h1>
       <div class="muted">Identifie-toi ou crée un compte pour accéder au salon # général.</div>
-      <div id="guest-notice" class="notice" style="margin-top:8px; white-space:normal; overflow:visible;"></div>
+      <div id="guest-notice" class="notice" style="margin-top:8px; min-height:22px; white-space:normal; overflow:visible;"></div>
 
       <input type="text" id="auth-username" placeholder="Pseudo (inscription uniquement)" autocomplete="username" />
       <input type="email" id="auth-email" placeholder="Adresse e-mail" autocomplete="email" inputmode="email" />
       <input type="password" id="auth-password" placeholder="Mot de passe" autocomplete="current-password" />
 
-      <button type="submit" id="btn-login">Se connecter</button>
+      <button type="button" id="btn-login">Se connecter</button>
       <button type="button" id="btn-signup" class="ghost">Créer un compte</button>
     </form>
   </div>
@@ -1824,6 +1824,21 @@
       }, 3000);
     }
 
+    function cleanupSyncChannels() {
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel);
+        realtimeChannel = null;
+      }
+      if (presenceChannel) {
+        supabase.removeChannel(presenceChannel);
+        presenceChannel = null;
+      }
+      if (window.__pollInterval) {
+        clearInterval(window.__pollInterval);
+        window.__pollInterval = null;
+      }
+    }
+
     async function refreshSession(keepView = false) {
       const { data } = await supabase.auth.getSession();
       session = data.session;
@@ -1831,20 +1846,18 @@
       if (!session) {
         me = null;
         perms = {};
+        cleanupSyncChannels();
+        onlineUserIds = new Set();
         document.getElementById('guest-screen').classList.remove('hidden');
         document.getElementById('app-screen').classList.add('hidden');
-        if (realtimeChannel) { supabase.removeChannel(realtimeChannel); realtimeChannel = null; }
-        if (presenceChannel) { supabase.removeChannel(presenceChannel); presenceChannel = null; }
-        if (window.__pollInterval) { clearInterval(window.__pollInterval); window.__pollInterval = null; }
-        onlineUserIds = new Set();
         return;
       }
 
       document.getElementById('guest-screen').classList.add('hidden');
       document.getElementById('app-screen').classList.remove('hidden');
 
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission().catch(() => {});
+      if (!roles || roles.length === 0) {
+        await loadRoles();
       }
 
       const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
@@ -1879,9 +1892,16 @@
       if (!keepView) {
         showView('chat');
         await loadChat();
+      } else if (currentView === 'chat') {
+        await loadChat();
+      } else if (currentView === 'dm' && selectedDmPeer) {
+        await loadDmThread();
+      } else if (currentView === 'admin') {
+        await loadAdmin();
       }
-      if (!realtimeChannel) subscribeRealtime();
-      if (!presenceChannel) startPresenceTracking();
+      cleanupSyncChannels();
+      subscribeRealtime();
+      startPresenceTracking();
     }
 
     async function uploadAsset(file, kind) {
@@ -1949,33 +1969,31 @@
     const signupBtnEl = document.getElementById('btn-signup');
     signupBtnEl.addEventListener('click', (e) => {
       e.preventDefault();
-      handleSignupSubmit();
-    });
-    signupBtnEl.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      if (document.activeElement && document.activeElement !== signupBtnEl && typeof document.activeElement.blur === 'function') {
         document.activeElement.blur();
       }
       handleSignupSubmit();
-    }, { passive: false });
+    });
 
     let isLoggingIn = false;
     let lastLoginAttemptAt = 0;
 
     async function handleLoginSubmit() {
       const now = Date.now();
-      if (isLoggingIn || now - lastLoginAttemptAt < 400) return;
+      if (isLoggingIn || now - lastLoginAttemptAt < 120) return;
       lastLoginAttemptAt = now;
 
       const btn = document.getElementById('btn-login');
-      const email = document.getElementById('auth-email').value.trim();
-      const password = document.getElementById('auth-password').value;
+      const emailEl = document.getElementById('auth-email');
+      const passEl = document.getElementById('auth-password');
+      const email = (emailEl?.value || '').trim();
+      const password = passEl?.value || '';
 
       if (!email || !password) {
-        return setNotice('Remplis ton adresse e-mail complète et ton mot de passe.', true);
+        return setNotice('Remplis ton adresse e-mail et ton mot de passe.', true);
       }
       if (!email.includes('@') || !email.includes('.')) {
-        return setNotice("L'adresse e-mail semble incomplète (ex. nom@gmail.com).", true);
+        return setNotice(`E-mail invalide ("${email}"). Vérifie l'adresse (ex. nom@gmail.com).`, true);
       }
 
       isLoggingIn = true;
@@ -1985,7 +2003,11 @@
       }
       setNotice('Connexion en cours...');
       try {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const loginPromise = supabase.auth.signInWithPassword({ email, password });
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Délai dépassé : vérifie la connexion internet de cet appareil.')), 12000)
+        );
+        const { data: authData, error } = await Promise.race([loginPromise, timeoutPromise]);
         if (error) {
           const msg = error.message === 'Invalid login credentials'
             ? 'E-mail ou mot de passe incorrect.'
@@ -1993,10 +2015,14 @@
           setNotice(msg, true);
           return;
         }
+        if (!authData?.session) {
+          setNotice('Connexion refusée ou compte non confirmé.', true);
+          return;
+        }
         setNotice('');
         await refreshSession();
       } catch (err) {
-        setNotice(err?.message || 'Erreur de connexion.', true);
+        setNotice(err?.message || 'Erreur réseau lors de la connexion.', true);
       } finally {
         isLoggingIn = false;
         if (btn) {
@@ -2015,16 +2041,18 @@
     }
 
     const loginBtnEl = document.getElementById('btn-login');
-    loginBtnEl.addEventListener('click', (e) => {
-      e.preventDefault();
-      handleLoginSubmit();
-    });
-    loginBtnEl.addEventListener('touchend', (e) => {
-      if (document.activeElement && typeof document.activeElement.blur === 'function') {
-        document.activeElement.blur();
-      }
-      handleLoginSubmit();
-    }, { passive: true });
+    if (loginBtnEl) {
+      loginBtnEl.onclick = (e) => {
+        if (e) e.preventDefault();
+        handleLoginSubmit();
+      };
+      loginBtnEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.keyCode === 13 || e.keyCode === 32) {
+          e.preventDefault();
+          handleLoginSubmit();
+        }
+      });
+    }
 
     for (const fieldId of ['auth-username', 'auth-email', 'auth-password']) {
       document.getElementById(fieldId)?.addEventListener('keydown', (e) => {
