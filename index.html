@@ -126,10 +126,109 @@
       grid-template-columns: 220px 1fr 230px;
       min-height: 0;
     }
+    .mobile-subbar {
+      display: none;
+    }
+    .mobile-drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      z-index: 45;
+    }
+    .mobile-drawer {
+      position: fixed;
+      top: 48px;
+      right: 0;
+      bottom: 0;
+      width: min(300px, 88vw);
+      background: var(--sidebar);
+      border-left: 1px solid var(--border);
+      z-index: 46;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
     @media (max-width: 900px) {
-      .main-body { grid-template-columns: 1fr; overflow-y: auto; }
+      .main-body {
+        grid-template-columns: 1fr;
+        min-height: 0;
+        flex: 1;
+        overflow: hidden;
+      }
+      .center-col {
+        min-height: 0;
+        flex: 1;
+      }
       .left-col, .right-col { display: none; }
-      .app-shell { height: auto; min-height: 100vh; overflow: visible; }
+      .app-shell {
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow: hidden;
+      }
+      .topbar {
+        height: auto;
+        min-height: 48px;
+        padding: 8px 10px;
+        flex-wrap: wrap;
+      }
+      .topbar-right {
+        width: 100%;
+        justify-content: flex-start;
+      }
+      .mobile-subbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 12px;
+        background: var(--sidebar);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .view-panel {
+        padding: 10px;
+      }
+      .box {
+        padding: 12px;
+        margin-bottom: 10px;
+      }
+      .chat-input-bar {
+        padding: 8px 10px 12px;
+      }
+      .dm-box {
+        padding-bottom: 10px;
+      }
+      .dm-layout {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .dm-layout > div:first-child {
+        border-right: none !important;
+        border-bottom: 1px solid var(--border);
+        padding-right: 0 !important;
+        padding-bottom: 8px;
+        max-height: 150px;
+      }
+      .dm-thread {
+        min-height: 120px;
+      }
+      .dm-bubble {
+        max-width: 92%;
+      }
+      .toast-notif {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        max-width: none;
+      }
+      table {
+        font-size: 12px;
+      }
+      th, td {
+        padding: 6px 5px;
+      }
     }
 
     /* LEFT SIDEBAR */
@@ -441,6 +540,20 @@
         <button id="btn-logout" class="ghost sm">Déconnexion</button>
       </div>
     </header>
+
+    <div id="mobile-subbar" class="mobile-subbar">
+      <div class="muted">Membres connectés : <strong id="mobile-online-count" style="color:var(--text);">0</strong></div>
+      <button id="btn-mobile-members" class="ghost sm">Voir les membres</button>
+    </div>
+
+    <div id="mobile-drawer-backdrop" class="mobile-drawer-backdrop hidden"></div>
+    <aside id="mobile-drawer" class="mobile-drawer hidden">
+      <div class="row" style="justify-content:space-between;">
+        <div class="section-label" style="padding:0;">Membres (<span id="mobile-drawer-count">0</span>)</div>
+        <button id="btn-close-mobile-drawer" class="ghost sm">Fermer</button>
+      </div>
+      <div id="mobile-members-list"></div>
+    </aside>
 
     <div class="main-body">
       <!-- COLONNE GAUCHE -->
@@ -910,8 +1023,33 @@
         `;
       }).join('');
 
+      const mobileList = document.getElementById('mobile-members-list');
+      const mobileCount = document.getElementById('mobile-drawer-count');
+      const mobileOnlineCount = document.getElementById('mobile-online-count');
+      if (mobileCount) mobileCount.textContent = `${onlineCount} en ligne / ${sortedApproved.length}`;
+      if (mobileOnlineCount) mobileOnlineCount.textContent = `${onlineCount}/${sortedApproved.length}`;
+      if (mobileList) {
+        mobileList.innerHTML = sortedApproved.map(m => {
+          const col = /^#[0-9a-fA-F]{6}$/.test(m.profile_color || '') ? m.profile_color : '#9aa2b1';
+          const unread = unreadByPeer[m.id] || 0;
+          const on = isUserOnline(m.id);
+          return `
+            <div class="member-row" data-mid="${m.id}">
+              ${renderAvatarWithPresence(m.avatar_url, m.id, 'avatar-sm', false)}
+              <span style="color:${col}; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">${esc(m.username)}</span>
+              <span class="muted" style="font-size:11px;">${on ? 'En ligne' : 'Hors ligne'}</span>
+              ${m.role === 'admin' ? '<span class="tag">admin</span>' : ''}
+              ${unread > 0 ? `<span class="notif-badge">${unread}</span>` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
       document.querySelectorAll('.member-row').forEach(row => {
-        row.addEventListener('click', () => openMemberModal(row.dataset.mid));
+        row.addEventListener('click', () => {
+          closeMobileDrawer();
+          openMemberModal(row.dataset.mid);
+        });
       });
 
       renderDmList();
@@ -1750,6 +1888,17 @@
       const { data } = supabase.storage.from('avatars').getPublicUrl(path);
       return data.publicUrl;
     }
+
+    function closeMobileDrawer() {
+      document.getElementById('mobile-drawer')?.classList.add('hidden');
+      document.getElementById('mobile-drawer-backdrop')?.classList.add('hidden');
+    }
+    document.getElementById('btn-mobile-members')?.addEventListener('click', () => {
+      document.getElementById('mobile-drawer')?.classList.remove('hidden');
+      document.getElementById('mobile-drawer-backdrop')?.classList.remove('hidden');
+    });
+    document.getElementById('btn-close-mobile-drawer')?.addEventListener('click', closeMobileDrawer);
+    document.getElementById('mobile-drawer-backdrop')?.addEventListener('click', closeMobileDrawer);
 
     // EVENTS
     document.getElementById('dm-toast').addEventListener('click', async () => {
