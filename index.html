@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forum Public avec Panneau Admin</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --subcard: #0f172a;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .container { max-width: 1080px; margin: 0 auto; padding: 24px 16px; }
+    header {
+      display: flex; flex-wrap: wrap; justify-content: space-between;
+      align-items: center; gap: 16px;
+      border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px; margin-bottom: 16px;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    input, textarea, select, button {
+      font: inherit; border-radius: 8px; border: 1px solid var(--border);
+      padding: 8px 12px; background: var(--subcard); color: var(--text);
+    }
+    button { background: var(--accent); color: #082f49; font-weight: 600; border: none; cursor: pointer; }
+    button.secondary { background: #334155; color: var(--text); }
+    button.ok { background: var(--ok); color: #052e16; }
+    button.danger { background: var(--danger); color: #fff; }
+    button.sm { padding: 4px 10px; font-size: 0.85rem; }
+    .badge {
+      display: inline-block; background: var(--subcard); border: 1px solid var(--accent);
+      color: var(--accent); font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; margin-left: 6px;
+    }
+    .badge.pending { border-color: var(--warn); color: var(--warn); }
+    .badge.rejected { border-color: var(--danger); color: var(--danger); }
+    .meta { color: var(--muted); font-size: 0.85rem; }
+    .hidden { display: none !important; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .tab-btn.active { outline: 2px solid var(--accent); }
+    .grid-forum { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
+    @media (max-width: 780px) { .grid-forum { grid-template-columns: 1fr; } }
+    .topic-item { padding: 10px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
+    .topic-item:hover, .topic-item.active { background: var(--subcard); border-color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
+    #status-banner { color: var(--accent); margin-bottom: 12px; min-height: 22px; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1 style="margin:0;">Mon Forum</h1>
+        <div class="meta">Comptes approuvés, rôles à permissions, mots bannis & logs</div>
+      </div>
+
+      <div id="auth-guest" class="row">
+        <input type="text" id="auth-username" placeholder="Pseudo (inscription)" />
+        <input type="email" id="auth-email" placeholder="E-mail" />
+        <input type="password" id="auth-password" placeholder="Mot de passe" />
+        <button id="btn-login">Connexion</button>
+        <button id="btn-signup" class="secondary">Inscription</button>
+      </div>
+
+      <div id="auth-user" class="row hidden">
+        <span id="current-user-label"></span>
+        <button id="btn-toggle-admin" class="hidden">Panneau Admin</button>
+        <button id="btn-logout" class="secondary">Déconnexion</button>
+      </div>
+    </header>
+
+    <div id="status-banner"></div>
+
+    <section id="admin-panel" class="card hidden">
+      <div class="row" style="justify-content:space-between; margin-bottom:10px;">
+        <h2 style="margin:0;">Panneau d'administration</h2>
+        <span class="meta" id="admin-perms-summary"></span>
+      </div>
+
+      <div class="tabs">
+        <button class="secondary tab-btn active" data-tab="tab-users" id="nav-tab-users">Comptes & Rôles</button>
+        <button class="secondary tab-btn" data-tab="tab-roles" id="nav-tab-roles">Créer un rôle</button>
+        <button class="secondary tab-btn" data-tab="tab-words" id="nav-tab-words">Mots bannis</button>
+        <button class="secondary tab-btn" data-tab="tab-logs" id="nav-tab-logs">Logs système</button>
+      </div>
+
+      <div id="tab-users" class="admin-tab">
+        <table>
+          <thead>
+            <tr>
+              <th>Pseudo</th>
+              <th>Statut</th>
+              <th>Validation</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody id="admin-users-tbody"></tbody>
+        </table>
+      </div>
+
+      <div id="tab-roles" class="admin-tab hidden">
+        <div class="row" style="margin-bottom:12px;">
+          <input type="text" id="role-name" placeholder="Nom du rôle (ex: super_modo)" />
+          <label class="meta"><input type="checkbox" id="perm-moderate" /> Modérer messages</label>
+          <label class="meta"><input type="checkbox" id="perm-approve" /> Accepter/refuser comptes</label>
+          <label class="meta"><input type="checkbox" id="perm-roles" /> Gérer les rôles</label>
+          <label class="meta"><input type="checkbox" id="perm-words" /> Gérer mots bannis</label>
+          <label class="meta"><input type="checkbox" id="perm-logs" /> Voir les logs</label>
+          <button id="btn-add-role">Ajouter le rôle</button>
+        </div>
+        <div id="roles-overview" class="meta"></div>
+      </div>
+
+      <div id="tab-words" class="admin-tab hidden">
+        <div class="row" style="margin-bottom:12px;">
+          <input type="text" id="banned-word-input" placeholder="Mot ou expression interdite..." />
+          <button id="btn-add-word">Ajouter le mot banni</button>
+        </div>
+        <div id="banned-words-list" class="row"></div>
+      </div>
+
+      <div id="tab-logs" class="admin-tab hidden">
+        <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+          <span class="meta">50 dernières actions enregistrées</span>
+          <button class="secondary sm" id="btn-refresh-logs">Actualiser</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Action</th>
+              <th>Détails</th>
+            </tr>
+          </thead>
+          <tbody id="admin-logs-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="grid-forum">
+      <aside class="card">
+        <h2 style="margin-top:0;">Sujets</h2>
+        <div id="new-topic-box" class="hidden" style="margin-bottom:14px;">
+          <input type="text" id="topic-title-input" placeholder="Nouveau sujet..." style="width:100%; margin-bottom:8px;" />
+          <button id="btn-create-topic" style="width:100%;">Créer le sujet</button>
+        </div>
+        <div id="topics-list"></div>
+      </aside>
+
+      <main class="card">
+        <h2 id="selected-topic-title" style="margin-top:0;">Sélectionne un sujet</h2>
+        <div id="posts-list"></div>
+        <div id="new-post-box" class="hidden" style="margin-top:16px;">
+          <textarea id="post-content-input" rows="3" placeholder="Écris ta réponse..." style="width:100%; margin-bottom:8px;"></textarea>
+          <button id="btn-create-post">Publier</button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const SUPABASE_URL = 'https://sdgkdiybppvsclgakdem.supabase.co';
+    const SUPABASE_ANON_KEY = 'TA_CLE_PUBLISHABLE_COPIEE';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let session = null;
+    let profile = null;
+    let perms = {};
+    let roles = [];
+    let topics = [];
+    let selectedTopicId = null;
+
+    const banner = document.getElementById('status-banner');
+    const notify = (msg) => { banner.textContent = msg || ''; };
+    const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+
+    function hasAnyAdminPerm(p) {
+      return !!(p.can_approve_users || p.can_manage_roles || p.can_manage_banned_words || p.can_view_logs);
+    }
+
+    async function loadRoles() {
+      const { data } = await supabase.from('roles').select('*').order('created_at');
+      roles = data || [];
+      document.getElementById('roles-overview').innerHTML = roles.map(r => {
+        const activePerms = [
+          r.can_moderate && 'Modération',
+          r.can_approve_users && 'Validation comptes',
+          r.can_manage_roles && 'Gestion rôles',
+          r.can_manage_banned_words && 'Mots bannis',
+          r.can_view_logs && 'Logs'
+        ].filter(Boolean).join(', ') || 'Aucune permission spéciale';
+        return `<div><strong>${esc(r.name)}</strong> : ${activePerms}</div>`;
+      }).join('');
+    }
+
+    async function refreshUser() {
+      const { data } = await supabase.auth.getSession();
+      session = data.session;
+
+      const guestEl = document.getElementById('auth-guest');
+      const userEl = document.getElementById('auth-user');
+      const adminBtn = document.getElementById('btn-toggle-admin');
+      const adminPanel = document.getElementById('admin-panel');
+      const topicBox = document.getElementById('new-topic-box');
+      const postBox = document.getElementById('new-post-box');
+
+      if (!session) {
+        profile = null;
+        perms = {};
+        guestEl.classList.remove('hidden');
+        userEl.classList.add('hidden');
+        adminBtn.classList.add('hidden');
+        adminPanel.classList.add('hidden');
+        topicBox.classList.add('hidden');
+        postBox.classList.add('hidden');
+        return;
+      }
+
+      const { data: p } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+      profile = p;
+      const roleDef = roles.find(r => r.name === profile?.role) || {};
+      perms = profile?.status === 'approved' ? roleDef : {};
+
+      guestEl.classList.add('hidden');
+      userEl.classList.remove('hidden');
+
+      const statusBadge = profile?.status === 'approved'
+        ? ''
+        : `<span class="badge ${profile?.status}">${profile?.status === 'pending' ? 'En attente de validation' : 'Compte refusé'}</span>`;
+
+      document.getElementById('current-user-label').innerHTML =
+        `<strong>${esc(profile?.username)}</strong> <span class="badge">${esc(profile?.role)}</span> ${statusBadge}`;
+
+      if (profile?.status === 'approved') {
+        topicBox.classList.remove('hidden');
+        if (selectedTopicId) postBox.classList.remove('hidden');
+      } else {
+        topicBox.classList.add('hidden');
+        postBox.classList.add('hidden');
+        notify('Ton compte est en attente de validation par un administrateur avant de pouvoir publier.');
+      }
+
+      if (hasAnyAdminPerm(perms)) {
+        adminBtn.classList.remove('hidden');
+        configureAdminTabs();
+      } else {
+        adminBtn.classList.add('hidden');
+        adminPanel.classList.add('hidden');
+      }
+    }
+
+    function configureAdminTabs() {
+      const showUsers = !!(perms.can_approve_users || perms.can_manage_roles);
+      document.getElementById('nav-tab-users').classList.toggle('hidden', !showUsers);
+      document.getElementById('nav-tab-roles').classList.toggle('hidden', !perms.can_manage_roles);
+      document.getElementById('nav-tab-words').classList.toggle('hidden', !perms.can_manage_banned_words);
+      document.getElementById('nav-tab-logs').classList.toggle('hidden', !perms.can_view_logs);
+    }
+
+    async function loadAdminData() {
+      if (perms.can_approve_users || perms.can_manage_roles) {
+        const { data: users } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+        const tbody = document.getElementById('admin-users-tbody');
+        tbody.innerHTML = (users || []).map(u => {
+          const roleSelect = perms.can_manage_roles
+            ? `<select class="user-role-sel" data-uid="${u.id}">
+                ${roles.map(r => `<option value="${esc(r.name)}" ${r.name === u.role ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}
+               </select>`
+            : esc(u.role);
+
+          const approvalBtns = perms.can_approve_users
+            ? `<button class="ok sm status-btn" data-uid="${u.id}" data-status="approved">Accepter</button>
+               <button class="danger sm status-btn" data-uid="${u.id}" data-status="rejected">Refuser</button>`
+            : '-';
+
+          return `
+            <tr>
+              <td><strong>${esc(u.username)}</strong></td>
+              <td><span class="badge ${u.status}">${esc(u.status)}</span></td>
+              <td class="row">${approvalBtns}</td>
+              <td>${roleSelect}</td>
+            </tr>
+          `;
+        }).join('');
+
+        tbody.querySelectorAll('.status-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const uid = btn.dataset.uid;
+            const status = btn.dataset.status;
+            const { error } = await supabase.from('profiles').update({ status }).eq('id', uid);
+            if (error) return notify('Erreur : ' + error.message);
+            notify(`Statut mis à jour (${status}).`);
+            await loadAdminData();
+          });
+        });
+
+        tbody.querySelectorAll('.user-role-sel').forEach(sel => {
+          sel.addEventListener('change', async () => {
+            const uid = sel.dataset.uid;
+            const role = sel.value;
+            const { error } = await supabase.from('profiles').update({ role }).eq('id', uid);
+            if (error) return notify('Erreur : ' + error.message);
+            notify(`Rôle mis à jour (${role}).`);
+            await refreshUser();
+            await loadAdminData();
+          });
+        });
+      }
+
+      if (perms.can_manage_banned_words) {
+        const { data: words } = await supabase.from('banned_words').select('*').order('word');
+        const box = document.getElementById('banned-words-list');
+        box.innerHTML = (words || []).map(w => `
+          <span class="badge">
+            ${esc(w.word)}
+            <a href="#" data-wid="${w.id}" class="del-word" style="color:#ef4444; margin-left:6px; text-decoration:none;">×</a>
+          </span>
+        `).join('') || '<span class="meta">Aucun mot banni configuré.</span>';
+
+        box.querySelectorAll('.del-word').forEach(a => {
+          a.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await supabase.from('banned_words').delete().eq('id', Number(a.dataset.wid));
+            notify('Mot banni retiré.');
+            await loadAdminData();
+          });
+        });
+      }
+
+      if (perms.can_view_logs) {
+        const { data: logs } = await supabase
+          .from('audit_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        document.getElementById('admin-logs-tbody').innerHTML = (logs || []).map(l => `
+          <tr>
+            <td class="meta">${new Date(l.created_at).toLocaleString('fr-FR')}</td>
+            <td><strong>${esc(l.action)}</strong></td>
+            <td>${esc(l.details)}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    async function loadTopics() {
+      const { data } = await supabase
+        .from('topics')
+        .select('id, title, created_at, author_id, profiles(username, role)')
+        .order('created_at', { ascending: false });
+
+      topics = data || [];
+      const listEl = document.getElementById('topics-list');
+      if (topics.length === 0) {
+        listEl.innerHTML = '<div class="meta">Aucun sujet.</div>';
+        return;
+      }
+      if (!selectedTopicId) selectedTopicId = topics[0].id;
+
+      listEl.innerHTML = topics.map(t => `
+        <div class="topic-item ${t.id === selectedTopicId ? 'active' : ''}" data-tid="${t.id}">
+          <div><strong>${esc(t.title)}</strong></div>
+          <div class="meta">par ${esc(t.profiles?.username)} <span class="badge">${esc(t.profiles?.role)}</span></div>
+        </div>
+      `).join('');
+
+      listEl.querySelectorAll('.topic-item').forEach(el => {
+        el.addEventListener('click', async () => {
+          selectedTopicId = Number(el.dataset.tid);
+          await loadTopics();
+        });
+      });
+
+      const currentTopic = topics.find(t => t.id === selectedTopicId);
+      document.getElementById('selected-topic-title').textContent = currentTopic ? currentTopic.title : 'Sélectionne un sujet';
+      if (selectedTopicId) await loadPosts(selectedTopicId);
+    }
+
+    async function loadPosts(topicId) {
+      const { data } = await supabase
+        .from('posts')
+        .select('id, content, created_at, author_id, profiles(username, role)')
+        .eq('topic_id', topicId)
+        .order('created_at', { ascending: true });
+
+      const postsEl = document.getElementById('posts-list');
+      if (!data || data.length === 0) {
+        postsEl.innerHTML = '<div class="meta">Aucun message dans ce sujet.</div>';
+        return;
+      }
+
+      postsEl.innerHTML = data.map(p => {
+        const canDel = session && (session.user.id === p.author_id || perms.can_moderate);
+        return `
+          <div class="card" style="background:var(--subcard); margin-bottom:10px;">
+            <div class="row" style="justify-content:space-between; margin-bottom:6px;">
+              <div>
+                <strong>${esc(p.profiles?.username)}</strong>
+                <span class="badge">${esc(p.profiles?.role)}</span>
+                <span class="meta">· ${new Date(p.created_at).toLocaleString('fr-FR')}</span>
+              </div>
+              ${canDel ? `<button class="danger sm del-post" data-pid="${p.id}">Supprimer</button>` : ''}
+            </div>
+            <div>${esc(p.content)}</div>
+          </div>
+        `;
+      }).join('');
+
+      postsEl.querySelectorAll('.del-post').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const { error } = await supabase.from('posts').delete().eq('id', Number(btn.dataset.pid));
+          if (error) return notify('Suppression refusée : ' + error.message);
+          notify('Message supprimé (action enregistrée dans les logs).');
+          await loadPosts(topicId);
+        });
+      });
+    }
+
+    document.getElementById('btn-toggle-admin').addEventListener('click', async () => {
+      const panel = document.getElementById('admin-panel');
+      panel.classList.toggle('hidden');
+      if (!panel.classList.contains('hidden')) await loadAdminData();
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.remove('hidden');
+        await loadAdminData();
+      });
+    });
+
+    document.getElementById('btn-add-role').addEventListener('click', async () => {
+      const name = document.getElementById('role-name').value.trim().toLowerCase();
+      if (!name) return notify('Entre un nom de rôle.');
+      const payload = {
+        name,
+        can_moderate: document.getElementById('perm-moderate').checked,
+        can_approve_users: document.getElementById('perm-approve').checked,
+        can_manage_roles: document.getElementById('perm-roles').checked,
+        can_manage_banned_words: document.getElementById('perm-words').checked,
+        can_view_logs: document.getElementById('perm-logs').checked
+      };
+      const { error } = await supabase.from('roles').insert(payload);
+      if (error) return notify('Erreur création rôle : ' + error.message);
+      document.getElementById('role-name').value = '';
+      notify(`Rôle "${name}" créé avec ses permissions.`);
+      await loadRoles();
+      await loadAdminData();
+    });
+
+    document.getElementById('btn-add-word').addEventListener('click', async () => {
+      const word = document.getElementById('banned-word-input').value.trim().toLowerCase();
+      if (!word) return;
+      const { error } = await supabase.from('banned_words').insert({ word, added_by: session.user.id });
+      if (error) return notify('Erreur mot banni : ' + error.message);
+      document.getElementById('banned-word-input').value = '';
+      notify(`Mot banni "${word}" ajouté.`);
+      await loadAdminData();
+    });
+
+    document.getElementById('btn-refresh-logs').addEventListener('click', loadAdminData);
+
+    document.getElementById('btn-signup').addEventListener('click', async () => {
+      const username = document.getElementById('auth-username').value.trim();
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      if (!username || !email || !password) return notify('Remplis tous les champs.');
+      const { error } = await supabase.auth.signUp({ email, password, options: { data: { username } } });
+      notify(error ? 'Erreur : ' + error.message : 'Compte créé ! En attente de validation par un admin.');
+    });
+
+    document.getElementById('btn-login').addEventListener('click', async () => {
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return notify('Erreur : ' + error.message);
+      notify('Connecté.');
+      await refreshUser();
+      await loadTopics();
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      notify('Déconnecté.');
+      await refreshUser();
+      await loadTopics();
+    });
+
+    document.getElementById('btn-create-topic').addEventListener('click', async () => {
+      const title = document.getElementById('topic-title-input').value.trim();
+      if (!title) return;
+      const { data, error } = await supabase.from('topics').insert({ title, author_id: session.user.id }).select().single();
+      if (error) return notify(error.message);
+      document.getElementById('topic-title-input').value = '';
+      selectedTopicId = data.id;
+      notify('Sujet créé.');
+      await loadTopics();
+    });
+
+    document.getElementById('btn-create-post').addEventListener('click', async () => {
+      const content = document.getElementById('post-content-input').value.trim();
+      if (!content || !selectedTopicId) return;
+      const { error } = await supabase.from('posts').insert({ topic_id: selectedTopicId, author_id: session.user.id, content });
+      if (error) return notify(error.message);
+      document.getElementById('post-content-input').value = '';
+      notify('Message publié.');
+      await loadPosts(selectedTopicId);
+    });
+
+    await loadRoles();
+    await refreshUser();
+    await loadTopics();
+  </script>
+</body>
+</html>
