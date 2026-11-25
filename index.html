@@ -86,6 +86,23 @@
       font-weight: 700;
       margin-left: 5px;
     }
+    .dm-sender-alert {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(218, 54, 51, 0.2);
+      border: 1px solid rgba(248, 81, 73, 0.65);
+      color: #ff7b72;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .member-row.has-unread {
+      background: rgba(218, 54, 51, 0.08);
+      border: 1px solid rgba(248, 81, 73, 0.35);
+    }
 
     /* TOAST NOTIFICATION */
     .toast-notif {
@@ -926,12 +943,15 @@
         const statusTag = rel?.status === 'pending' && rel.requester_id === session.user.id
           ? '<span class="tag pending">En attente</span>'
           : '';
+        const senderAlert = unread > 0
+          ? `<span class="dm-sender-alert">● ${unread} nouveau${unread > 1 ? 'x' : ''}</span>`
+          : '';
         return `
-          <div class="member-row ${selectedDmPeer?.id === u.id ? 'channel-active-row' : ''}" data-uid="${u.id}">
+          <div class="member-row ${selectedDmPeer?.id === u.id ? 'channel-active-row' : ''} ${unread > 0 ? 'has-unread' : ''}" data-uid="${u.id}">
             <img class="avatar-img avatar-sm" src="${esc(u.avatar_url || FALLBACK_AVATAR)}" alt="" />
-            <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(u.username)}</span>
+            <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:${unread > 0 ? '700' : '400'};">${esc(u.username)}</span>
+            ${senderAlert}
             ${statusTag}
-            ${unread > 0 ? `<span class="notif-badge">${unread}</span>` : ''}
           </div>
         `;
       }).join('') || '<div class="muted">Aucune demande ou discussion active. Clique sur un membre à droite pour envoyer une demande.</div>';
@@ -1007,6 +1027,14 @@
             }
             setNotice('Demande de DM acceptée.');
             await loadDmRequests();
+      if (session) {
+        const { data: existingDms } = await supabase
+          .from('direct_messages')
+          .select('id')
+          .eq('recipient_id', session.user.id)
+          .limit(50);
+        window.__seenDmIds = new Set((existingDms || []).map(x => x.id));
+      }
             await loadDmThread();
           });
 
@@ -1293,6 +1321,9 @@
           const peerId = m.sender_id === session.user.id ? m.recipient_id : m.sender_id;
 
           if (payload.eventType === 'INSERT' && m.recipient_id === session.user.id) {
+            if (!window.__seenDmIds) window.__seenDmIds = new Set();
+            if (window.__seenDmIds.has(m.id)) return;
+            window.__seenDmIds.add(m.id);
             const isViewingThisThread = currentView === 'dm' && selectedDmPeer?.id === m.sender_id && !document.hidden;
             const sender = members.find(x => x.id === m.sender_id);
             if (!isViewingThisThread) {
@@ -1331,6 +1362,34 @@
             if (currentView === 'dm' && selectedDmPeer) renderDmRequestBanner();
           }
         }
+        const { data: incomingDms } = await supabase
+          .from('direct_messages')
+          .select('id, sender_id, recipient_id, content, created_at')
+          .eq('recipient_id', session.user.id)
+          .order('created_at', { ascending: false })
+          .limit(30);
+
+        if (incomingDms && incomingDms.length > 0) {
+          if (!window.__seenDmIds) {
+            window.__seenDmIds = new Set(incomingDms.map(m => m.id));
+          } else {
+            for (const m of [...incomingDms].reverse()) {
+              if (!window.__seenDmIds.has(m.id)) {
+                window.__seenDmIds.add(m.id);
+                const isViewingThisThread = currentView === 'dm' && selectedDmPeer?.id === m.sender_id && !document.hidden;
+                const sender = members.find(x => x.id === m.sender_id);
+                if (!isViewingThisThread) {
+                  unreadByPeer[m.sender_id] = (unreadByPeer[m.sender_id] || 0) + 1;
+                  updateNotifBadges();
+                  renderDmList();
+                  await loadMembers();
+                }
+                showDmToast(sender?.username || 'Message privé', m.content, m.sender_id);
+              }
+            }
+          }
+        }
+
         if (currentView === 'dm' && selectedDmPeer) {
           await loadDmThread();
         }
