@@ -71,6 +71,38 @@
     }
     .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #3fb950; }
 
+    /* BADGE NOTIFICATION */
+    .notif-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 5px;
+    }
+
+    /* TOAST NOTIFICATION */
+    .toast-notif {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      z-index: 100;
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px 14px;
+      max-width: 330px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+      cursor: pointer;
+    }
+
     .main-body {
       flex: 1;
       display: grid;
@@ -246,13 +278,25 @@
     }
 
     /* DM GRID */
-    .dm-layout { display: grid; grid-template-columns: 220px 1fr; gap: 14px; min-height: 420px; }
+    .dm-layout { display: grid; grid-template-columns: 230px 1fr; gap: 14px; min-height: 420px; }
     @media (max-width: 720px) { .dm-layout { grid-template-columns: 1fr; } }
     .dm-bubble {
       padding: 8px 11px; border-radius: 6px; margin-bottom: 6px;
       background: var(--sidebar); border: 1px solid var(--border); max-width: 82%;
     }
     .dm-bubble.mine { margin-left: auto; background: rgba(88, 101, 242, 0.18); border-color: rgba(88, 101, 242, 0.45); }
+    .dm-request-banner {
+      background: rgba(210, 153, 34, 0.12);
+      border: 1px solid rgba(210, 153, 34, 0.45);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
 
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
@@ -289,7 +333,7 @@
       </div>
       <div class="topbar-right">
         <button id="btn-nav-chat" class="ghost sm active">Salon général</button>
-        <button id="btn-nav-dm" class="ghost sm">Messages (DM)</button>
+        <button id="btn-nav-dm" class="ghost sm">Messages (DM)<span id="dm-total-badge" class="notif-badge hidden">0</span></button>
         <button id="btn-nav-profile" class="ghost sm">Mon profil</button>
         <button id="btn-toggle-admin" class="sm hidden">Administration</button>
         <button id="btn-logout" class="ghost sm">Déconnexion</button>
@@ -393,7 +437,11 @@
           <div class="box" style="flex:1; display:flex; flex-direction:column; margin-bottom:0;">
             <h2 style="margin:0 0 12px; font-size:15px;">Messages privés</h2>
             <div class="dm-layout" style="flex:1;">
-              <div style="border-right:1px solid var(--border); padding-right:10px;">
+              <div style="border-right:1px solid var(--border); padding-right:10px; overflow-y:auto;">
+                <div id="dm-requests-section" class="hidden" style="margin-bottom:12px;">
+                  <div class="section-label" style="color:#e3b341;">Demandes reçues</div>
+                  <div id="dm-requests-list"></div>
+                </div>
                 <div class="section-label">Membres</div>
                 <div id="dm-members-list"></div>
               </div>
@@ -401,6 +449,7 @@
                 <div id="dm-peer-header" style="font-weight:600; padding-bottom:8px; border-bottom:1px solid var(--border); margin-bottom:10px;">
                   Sélectionne un membre
                 </div>
+                <div id="dm-request-banner" class="dm-request-banner hidden"></div>
                 <div id="dm-thread" style="flex:1; overflow-y:auto; max-height:320px; margin-bottom:10px;"></div>
                 <div id="dm-composer" class="row hidden">
                   <input type="text" id="dm-input" placeholder="Écrire un message privé..." style="flex:1;" />
@@ -481,6 +530,9 @@
     </div>
   </div>
 
+  <!-- TOAST NOTIFICATION FLOTTANTE -->
+  <div id="dm-toast" class="toast-notif hidden"></div>
+
   <!-- MODALE FICHE MEMBRE AU CLIC -->
   <div id="member-modal" class="modal-backdrop hidden">
     <div class="modal-card">
@@ -534,10 +586,13 @@
     let perms = {};
     let roles = [];
     let members = [];
+    let dmRequests = [];
+    let unreadByPeer = {}; // { peerId: count }
     let selectedDmPeer = null;
     let inspectedMember = null;
     let currentView = 'chat';
     let realtimeChannel = null;
+    let toastPeerId = null;
 
     const esc = (s) => {
       const d = document.createElement('div');
@@ -557,6 +612,54 @@
       }
     };
 
+    // Petit son discret de notification sans fichier externe
+    function playNotifSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(740, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(980, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.18);
+      } catch (_) {}
+    }
+
+    function showDmToast(senderName, previewText, peerId) {
+      toastPeerId = peerId;
+      const toast = document.getElementById('dm-toast');
+      toast.innerHTML = `
+        <div style="font-weight:600; font-size:13px; margin-bottom:2px;">Nouveau message de ${esc(senderName)}</div>
+        <div class="muted" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(previewText)}</div>
+      `;
+      toast.classList.remove('hidden');
+      playNotifSound();
+
+      if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+        new Notification(`Message de ${senderName}`, { body: previewText });
+      }
+
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => toast.classList.add('hidden'), 6000);
+    }
+
+    function updateNotifBadges() {
+      const incomingPending = dmRequests.filter(r => session && r.recipient_id === session.user.id && r.status === 'pending').length;
+      const unreadMsgs = Object.values(unreadByPeer).reduce((a, b) => a + b, 0);
+      const total = incomingPending + unreadMsgs;
+
+      const badge = document.getElementById('dm-total-badge');
+      badge.textContent = total;
+      badge.classList.toggle('hidden', total === 0);
+
+      document.title = total > 0 ? `(${total}) Forum — # général` : 'Forum — # général';
+    }
+
     const canAdmin = () => !!(perms.can_approve_users || perms.can_manage_roles || perms.can_manage_banned_words || perms.can_view_logs || perms.can_moderate);
 
     function showView(name) {
@@ -573,6 +676,28 @@
       document.getElementById('btn-nav-dm').classList.toggle('active', name === 'dm');
       document.getElementById('btn-nav-profile').classList.toggle('active', name === 'profile');
       document.getElementById('btn-toggle-admin').classList.toggle('active', name === 'admin');
+    }
+
+    function getDmRelation(peerId) {
+      if (!session || !peerId) return null;
+      return dmRequests.find(r =>
+        (r.requester_id === session.user.id && r.recipient_id === peerId) ||
+        (r.requester_id === peerId && r.recipient_id === session.user.id)
+      ) || null;
+    }
+
+    async function loadDmRequests() {
+      if (!session) return;
+      const { data } = await supabase
+        .from('dm_requests')
+        .select('*')
+        .or(`requester_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`);
+      dmRequests = data || [];
+      updateNotifBadges();
+      renderDmList();
+      if (currentView === 'dm' && selectedDmPeer) {
+        renderDmRequestBanner();
+      }
     }
 
     async function loadRoles() {
@@ -697,33 +822,174 @@
       feed.querySelectorAll('.del-chat-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
           const { error } = await supabase.from('chat_messages').delete().eq('id', Number(btn.dataset.id));
-          if (error) setNotice(error.message, true);
+          if (error) return setNotice(error.message, true);
+          await loadChat();
         });
       });
     }
 
     function renderDmList() {
       const others = members.filter(m => session && m.id !== session.user.id && m.status === 'approved' && !m.is_banned);
-      document.getElementById('dm-members-list').innerHTML = others.map(u => `
-        <div class="member-row ${selectedDmPeer?.id === u.id ? 'channel-active-row' : ''}" data-uid="${u.id}">
-          <img class="avatar-img avatar-sm" src="${esc(u.avatar_url || FALLBACK_AVATAR)}" alt="" />
-          <span>${esc(u.username)}</span>
-        </div>
-      `).join('') || '<div class="muted">Aucun autre membre.</div>';
 
-      document.querySelectorAll('#dm-members-list [data-uid]').forEach(el => {
+      // Section des demandes en attente reçues
+      const incoming = dmRequests.filter(r => session && r.recipient_id === session.user.id && r.status === 'pending');
+      const reqSection = document.getElementById('dm-requests-section');
+      if (incoming.length > 0) {
+        reqSection.classList.remove('hidden');
+        document.getElementById('dm-requests-list').innerHTML = incoming.map(r => {
+          const u = members.find(m => m.id === r.requester_id);
+          if (!u) return '';
+          return `
+            <div class="member-row ${selectedDmPeer?.id === u.id ? 'channel-active-row' : ''}" data-uid="${u.id}">
+              <img class="avatar-img avatar-sm" src="${esc(u.avatar_url || FALLBACK_AVATAR)}" alt="" />
+              <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(u.username)}</span>
+              <span class="tag pending">Demande</span>
+            </div>
+          `;
+        }).join('');
+      } else {
+        reqSection.classList.add('hidden');
+      }
+
+      document.getElementById('dm-members-list').innerHTML = others.map(u => {
+        const unread = unreadByPeer[u.id] || 0;
+        const rel = getDmRelation(u.id);
+        const statusTag = rel?.status === 'pending' && rel.requester_id === session.user.id
+          ? '<span class="tag pending">En attente</span>'
+          : '';
+        return `
+          <div class="member-row ${selectedDmPeer?.id === u.id ? 'channel-active-row' : ''}" data-uid="${u.id}">
+            <img class="avatar-img avatar-sm" src="${esc(u.avatar_url || FALLBACK_AVATAR)}" alt="" />
+            <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(u.username)}</span>
+            ${statusTag}
+            ${unread > 0 ? `<span class="notif-badge">${unread}</span>` : ''}
+          </div>
+        `;
+      }).join('') || '<div class="muted">Aucun autre membre.</div>';
+
+      document.querySelectorAll('#dm-panel [data-uid]').forEach(el => {
         el.addEventListener('click', async () => {
           selectedDmPeer = others.find(x => x.id === el.dataset.uid) || null;
+          if (selectedDmPeer) {
+            delete unreadByPeer[selectedDmPeer.id];
+            updateNotifBadges();
+          }
           renderDmList();
           await loadDmThread();
         });
       });
     }
 
+    function renderDmRequestBanner() {
+      const banner = document.getElementById('dm-request-banner');
+      const composer = document.getElementById('dm-composer');
+      const input = document.getElementById('dm-input');
+      const btn = document.getElementById('btn-send-dm');
+
+      if (!selectedDmPeer || !session) {
+        banner.classList.add('hidden');
+        composer.classList.add('hidden');
+        return;
+      }
+
+      const rel = getDmRelation(selectedDmPeer.id);
+
+      // Cas 1 : Aucune demande encore envoyée -> le 1er message crée la demande
+      if (!rel) {
+        banner.classList.remove('hidden');
+        banner.innerHTML = `<span>Envoie un premier message à <strong>${esc(selectedDmPeer.username)}</strong> pour lui envoyer une demande de discussion.</span>`;
+        composer.classList.remove('hidden');
+        input.disabled = false;
+        input.placeholder = `Envoyer une demande de DM à ${selectedDmPeer.username}...`;
+        btn.disabled = false;
+        btn.textContent = 'Envoyer la demande';
+        return;
+      }
+
+      // Cas 2 : Demande en attente
+      if (rel.status === 'pending') {
+        if (rel.recipient_id === session.user.id) {
+          // C'est moi qui reçois la demande -> je dois Accepter ou Refuser
+          banner.classList.remove('hidden');
+          banner.innerHTML = `
+            <span><strong>${esc(selectedDmPeer.username)}</strong> souhaite discuter avec toi en privé.</span>
+            <div class="row">
+              <button id="btn-accept-dm-req" class="ok sm">Accepter</button>
+              <button id="btn-reject-dm-req" class="danger sm">Refuser</button>
+            </div>
+          `;
+          composer.classList.add('hidden');
+
+          document.getElementById('btn-accept-dm-req').addEventListener('click', async () => {
+            const { error } = await supabase
+              .from('dm_requests')
+              .update({ status: 'accepted', updated_at: new Date().toISOString() })
+              .eq('id', rel.id);
+            if (error) return setNotice(error.message, true);
+            setNotice('Demande de DM acceptée.');
+            await loadDmRequests();
+            await loadDmThread();
+          });
+
+          document.getElementById('btn-reject-dm-req').addEventListener('click', async () => {
+            const { error } = await supabase
+              .from('dm_requests')
+              .update({ status: 'rejected', updated_at: new Date().toISOString() })
+              .eq('id', rel.id);
+            if (error) return setNotice(error.message, true);
+            setNotice('Demande de DM refusée.');
+            await loadDmRequests();
+            await loadDmThread();
+          });
+        } else {
+          // C'est moi qui ai envoyé la demande -> j'attends sa réponse
+          banner.classList.remove('hidden');
+          banner.innerHTML = `<span>Demande envoyée. En attente que <strong>${esc(selectedDmPeer.username)}</strong> accepte la discussion.</span>`;
+          composer.classList.add('hidden');
+        }
+        return;
+      }
+
+      // Cas 3 : Demande refusée
+      if (rel.status === 'rejected') {
+        banner.classList.remove('hidden');
+        if (rel.recipient_id === session.user.id) {
+          banner.innerHTML = `
+            <span>Tu as refusé la demande de <strong>${esc(selectedDmPeer.username)}</strong>.</span>
+            <button id="btn-reaccept-dm-req" class="ghost sm">Autoriser finalement</button>
+          `;
+          document.getElementById('btn-reaccept-dm-req').addEventListener('click', async () => {
+            const { error } = await supabase
+              .from('dm_requests')
+              .update({ status: 'accepted', updated_at: new Date().toISOString() })
+              .eq('id', rel.id);
+            if (error) return setNotice(error.message, true);
+            await loadDmRequests();
+            await loadDmThread();
+          });
+        } else {
+          banner.innerHTML = `<span><strong>${esc(selectedDmPeer.username)}</strong> a refusé ta demande de message privé.</span>`;
+        }
+        composer.classList.add('hidden');
+        return;
+      }
+
+      // Cas 4 : Accepté -> discussion libre
+      banner.classList.add('hidden');
+      composer.classList.remove('hidden');
+      input.disabled = false;
+      input.placeholder = 'Écrire un message privé...';
+      btn.disabled = false;
+      btn.textContent = 'Envoyer';
+    }
+
     async function loadDmThread() {
       if (!selectedDmPeer || !session) return;
+      delete unreadByPeer[selectedDmPeer.id];
+      updateNotifBadges();
+
       document.getElementById('dm-peer-header').textContent = `Message privé — ${selectedDmPeer.username}`;
-      document.getElementById('dm-composer').classList.remove('hidden');
+      renderDmRequestBanner();
 
       const { data } = await supabase
         .from('direct_messages')
@@ -877,11 +1143,44 @@
           }
           if (currentView === 'admin') await loadAdmin();
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'direct_messages' }, (payload) => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'dm_requests' }, async (payload) => {
+          if (!session) return;
+          const req = payload.new || payload.old;
+          if (!req || (req.requester_id !== session.user.id && req.recipient_id !== session.user.id)) return;
+
+          await loadDmRequests();
+
+          if (payload.eventType === 'INSERT' && req.recipient_id === session.user.id) {
+            const sender = members.find(m => m.id === req.requester_id);
+            showDmToast(sender?.username || 'Un membre', 'T’a envoyé une demande de DM.', req.requester_id);
+          } else if (payload.eventType === 'UPDATE' && req.requester_id === session.user.id && req.status === 'accepted') {
+            const peer = members.find(m => m.id === req.recipient_id);
+            setNotice(`${peer?.username || 'Le membre'} a accepté ta demande de DM.`);
+            if (currentView === 'dm' && selectedDmPeer?.id === req.recipient_id) {
+              await loadDmThread();
+            }
+          }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'direct_messages' }, async (payload) => {
           const m = payload.new || payload.old;
           if (!m || !session) return;
-          if ((m.sender_id === session.user.id || m.recipient_id === session.user.id) && currentView === 'dm') {
-            loadDmThread();
+          if (m.sender_id !== session.user.id && m.recipient_id !== session.user.id) return;
+
+          const peerId = m.sender_id === session.user.id ? m.recipient_id : m.sender_id;
+
+          if (payload.eventType === 'INSERT' && m.recipient_id === session.user.id) {
+            const isViewingThisThread = currentView === 'dm' && selectedDmPeer?.id === m.sender_id && !document.hidden;
+            if (!isViewingThisThread) {
+              unreadByPeer[m.sender_id] = (unreadByPeer[m.sender_id] || 0) + 1;
+              updateNotifBadges();
+              renderDmList();
+              const sender = members.find(x => x.id === m.sender_id);
+              showDmToast(sender?.username || 'Message privé', m.content, m.sender_id);
+            }
+          }
+
+          if (currentView === 'dm' && selectedDmPeer?.id === peerId) {
+            await loadDmThread();
           }
         })
         .subscribe();
@@ -902,6 +1201,10 @@
 
       document.getElementById('guest-screen').classList.add('hidden');
       document.getElementById('app-screen').classList.remove('hidden');
+
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().catch(() => {});
+      }
 
       const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
       me = prof;
@@ -931,6 +1234,7 @@
 
       blocked.classList.add('hidden');
       await loadMembers();
+      await loadDmRequests();
       if (!keepView) {
         showView('chat');
         await loadChat();
@@ -948,6 +1252,17 @@
     }
 
     // EVENTS
+    document.getElementById('dm-toast').addEventListener('click', async () => {
+      document.getElementById('dm-toast').classList.add('hidden');
+      if (!toastPeerId) return;
+      const peer = members.find(m => m.id === toastPeerId);
+      if (!peer) return;
+      selectedDmPeer = peer;
+      showView('dm');
+      renderDmList();
+      await loadDmThread();
+    });
+
     document.getElementById('btn-signup').addEventListener('click', async () => {
       const username = document.getElementById('auth-username').value.trim();
       const email = document.getElementById('auth-email').value.trim();
@@ -982,6 +1297,7 @@
     document.getElementById('btn-nav-dm').addEventListener('click', async () => {
       if (me?.status !== 'approved' || me?.is_banned) return;
       showView('dm');
+      await loadDmRequests();
       renderDmList();
       if (selectedDmPeer) await loadDmThread();
     });
@@ -1011,7 +1327,8 @@
       if (!content || !session) return;
       inp.value = '';
       const { error } = await supabase.from('chat_messages').insert({ author_id: session.user.id, content });
-      if (error) setNotice(error.message, true);
+      if (error) return setNotice(error.message, true);
+      await loadChat();
     }
 
     document.getElementById('btn-send-chat').addEventListener('click', sendChatMessage);
@@ -1055,6 +1372,25 @@
       const inp = document.getElementById('dm-input');
       const content = inp.value.trim();
       if (!content || !selectedDmPeer || !session) return;
+
+      let rel = getDmRelation(selectedDmPeer.id);
+
+      // Si aucune demande n'existe encore, on crée la demande en 'pending' avant d'envoyer le 1er message
+      if (!rel) {
+        const { data: newReq, error: reqErr } = await supabase
+          .from('dm_requests')
+          .insert({
+            requester_id: session.user.id,
+            recipient_id: selectedDmPeer.id,
+            status: 'pending'
+          })
+          .select()
+          .single();
+        if (reqErr) return setNotice(reqErr.message, true);
+        rel = newReq;
+        dmRequests.push(newReq);
+      }
+
       inp.value = '';
       const { error } = await supabase.from('direct_messages').insert({
         sender_id: session.user.id,
@@ -1062,6 +1398,8 @@
         content
       });
       if (error) return setNotice(error.message, true);
+
+      await loadDmRequests();
       await loadDmThread();
     }
 
@@ -1086,6 +1424,7 @@
       selectedDmPeer = inspectedMember;
       document.getElementById('member-modal').classList.add('hidden');
       showView('dm');
+      await loadDmRequests();
       renderDmList();
       await loadDmThread();
     });
