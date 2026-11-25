@@ -408,14 +408,6 @@
     }
     input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
     button:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
-    button:active:not(:disabled) {
-      transform: scale(0.98);
-      filter: brightness(0.9);
-    }
-    .tap-pressed {
-      transform: scale(0.98) !important;
-      filter: brightness(0.88) !important;
-    }
     button {
       font: inherit; font-size: 13px; font-weight: 500;
       background: var(--accent); color: #fff;
@@ -523,7 +515,7 @@
   <!-- ÉCRAN DE CONNEXION OBLIGATOIRE -->
   <div id="guest-screen" class="auth-wrap">
     <form id="auth-form" class="auth-card" novalidate>
-      <h1>Connexion au forum <span class="tag">v16</span></h1>
+      <h1>Connexion au forum <span class="tag">v15</span></h1>
       <div class="muted">Identifie-toi ou crée un compte pour accéder au salon # général.</div>
       <div id="guest-notice" class="notice" style="margin-top:8px; min-height:22px; white-space:normal; overflow:visible;"></div>
 
@@ -819,14 +811,14 @@
   </div>
 
   <script type="module">
-    import { createClient } from '[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm)';
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-    const SUPABASE_URL = '[https://sdgkdiybppvsclgakdem.supabase.co](https://sdgkdiybppvsclgakdem.supabase.co)';
+    const SUPABASE_URL = 'https://sdgkdiybppvsclgakdem.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_eSAcsSsTMF9p5jBUa0tIkA_XnsH3nxP';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const FALLBACK_AVATAR = 'data:image/svg+xml;utf8,' + encodeURIComponent(
-      `<svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="#252a36"/><circle cx="40" cy="32" r="14" fill="#6e7681"/><ellipse cx="40" cy="66" rx="24" ry="16" fill="#6e7681"/></svg>`
+      `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="#252a36"/><circle cx="40" cy="32" r="14" fill="#6e7681"/><ellipse cx="40" cy="66" rx="24" ry="16" fill="#6e7681"/></svg>`
     );
 
     let session = null;
@@ -835,7 +827,7 @@
     let roles = [];
     let members = [];
     let dmRequests = [];
-    let unreadByPeer = {};
+    let unreadByPeer = {}; // { peerId: count }
     let selectedDmPeer = null;
     let inspectedMember = null;
     let currentView = 'chat';
@@ -860,137 +852,6 @@
           <span class="${dotClass}"></span>
         </span>
       `;
-    }
-
-    function bindUniversalTap(el, handler) {
-      if (!el || typeof handler !== 'function') return;
-      if (el.dataset.tapBound === '1') return;
-      el.dataset.tapBound = '1';
-
-      let lastFireAt = 0;
-      let touchStartX = 0;
-      let touchStartY = 0;
-      let touchMoved = false;
-
-      const invoke = (ev) => {
-        if (el.disabled) return;
-        const now = Date.now();
-        if (now - lastFireAt < 220) return;
-        lastFireAt = now;
-        try {
-          const res = handler(ev);
-          if (res && typeof res.catch === 'function') {
-            res.catch((err) => setNotice(err && err.message ? err.message : 'Erreur action', true));
-          }
-        } catch (err) {
-          setNotice(err && err.message ? err.message : 'Erreur action', true);
-        }
-      };
-
-      el.addEventListener('touchstart', (ev) => {
-        if (el.disabled) return;
-        const t = ev.touches && ev.touches[0];
-        touchStartX = t ? t.clientX : 0;
-        touchStartY = t ? t.clientY : 0;
-        touchMoved = false;
-        el.classList.add('tap-pressed');
-      }, { passive: true });
-
-      el.addEventListener('touchmove', (ev) => {
-        const t = ev.touches && ev.touches[0];
-        if (!t) return;
-        if (Math.abs(t.clientX - touchStartX) > 12 || Math.abs(t.clientY - touchStartY) > 12) {
-          touchMoved = true;
-          el.classList.remove('tap-pressed');
-        }
-      }, { passive: true });
-
-      el.addEventListener('touchend', (ev) => {
-        el.classList.remove('tap-pressed');
-        if (touchMoved || el.disabled) return;
-        if (ev.cancelable) ev.preventDefault();
-        invoke(ev);
-      }, { passive: false });
-
-      el.addEventListener('touchcancel', () => {
-        el.classList.remove('tap-pressed');
-      }, { passive: true });
-
-      el.addEventListener('click', (ev) => {
-        if (el.disabled) return;
-        if (ev.cancelable) ev.preventDefault();
-        invoke(ev);
-      });
-    }
-
-    function wireAllButtonsForOldTablets() {
-      const staticMap = {
-        'btn-login': () => {
-          if (document.activeElement && document.activeElement.id !== 'btn-login' && typeof document.activeElement.blur === 'function') {
-            document.activeElement.blur();
-          }
-          return handleLoginSubmit();
-        },
-        'btn-signup': () => {
-          if (document.activeElement && document.activeElement.id !== 'btn-signup' && typeof document.activeElement.blur === 'function') {
-            document.activeElement.blur();
-          }
-          return handleSignupSubmit();
-        },
-        'btn-logout': async () => {
-          await supabase.auth.signOut();
-          await refreshSession();
-        },
-        'btn-nav-chat': async () => {
-          if (!me || me.status !== 'approved' || me.is_banned) return;
-          showView('chat');
-          await loadChat(true);
-        },
-        'btn-nav-dm': async () => {
-          if (!me || me.status !== 'approved' || me.is_banned) return;
-          showView('dm');
-          await loadDmRequests();
-          renderDmList();
-          if (selectedDmPeer) await loadDmThread(true);
-        },
-        'btn-nav-profile': () => {
-          if (!me || me.status !== 'approved' || me.is_banned) return;
-          syncProfileForm();
-          showView('profile');
-        },
-        'btn-toggle-admin': async () => {
-          if (!canAdmin()) return;
-          showView('admin');
-          await loadAdmin();
-        },
-        'btn-send-chat': () => sendChatMessage(),
-        'btn-send-dm': () => sendDm(),
-        'btn-mobile-members': () => {
-          const d = document.getElementById('mobile-drawer');
-          const b = document.getElementById('mobile-drawer-backdrop');
-          if (d) d.classList.remove('hidden');
-          if (b) b.classList.remove('hidden');
-        },
-        'btn-close-mobile-drawer': () => closeMobileDrawer(),
-        'btn-close-modal': () => {
-          const m = document.getElementById('member-modal');
-          if (m) m.classList.add('hidden');
-          inspectedMember = null;
-        }
-      };
-
-      Object.keys(staticMap).forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) bindUniversalTap(el, staticMap[id]);
-      });
-
-      document.querySelectorAll('button').forEach((btn) => {
-        if (btn.dataset.tapBound !== '1') {
-          bindUniversalTap(btn, (ev) => {
-            if (btn.id && staticMap[btn.id]) return staticMap[btn.id](ev);
-          });
-        }
-      });
     }
 
     const esc = (s) => {
@@ -1084,6 +945,7 @@
       ) || null;
     }
 
+    // Contacts visibles dans la liste DM : uniquement ceux acceptés ou demandés (en attente / accepté)
     function getAllowedDmContacts() {
       if (!session) return [];
       const activeIds = new Set();
@@ -1139,6 +1001,8 @@
       members = data || [];
 
       const approvedVisible = members.filter(m => m.status === 'approved' && !m.is_banned);
+      document.getElementById('members-count').textContent = approvedVisible.length;
+
       const sortedApproved = [...approvedVisible].sort((a, b) => {
         const oa = isUserOnline(a.id) ? 0 : 1;
         const ob = isUserOnline(b.id) ? 0 : 1;
@@ -1440,6 +1304,7 @@
 
       const rel = getDmRelation(selectedDmPeer.id);
 
+      // Cas 1 : Pas encore de demande -> envoyer une demande (avec message optionnel ou bouton direct)
       if (!rel) {
         banner.classList.remove('hidden');
         banner.innerHTML = `
@@ -1458,6 +1323,7 @@
         return;
       }
 
+      // Cas 2 : Demande en attente
       if (rel.status === 'pending') {
         if (rel.recipient_id === session.user.id) {
           banner.classList.remove('hidden');
@@ -1482,14 +1348,14 @@
             }
             setNotice('Demande de DM acceptée.');
             await loadDmRequests();
-            if (session) {
-              const { data: existingDms } = await supabase
-                .from('direct_messages')
-                .select('id')
-                .eq('recipient_id', session.user.id)
-                .limit(50);
-              window.__seenDmIds = new Set((existingDms || []).map(x => x.id));
-            }
+      if (session) {
+        const { data: existingDms } = await supabase
+          .from('direct_messages')
+          .select('id')
+          .eq('recipient_id', session.user.id)
+          .limit(50);
+        window.__seenDmIds = new Set((existingDms || []).map(x => x.id));
+      }
             await loadDmThread(true);
           });
 
@@ -1515,6 +1381,7 @@
         return;
       }
 
+      // Cas 3 : Demande refusée
       if (rel.status === 'rejected') {
         banner.classList.remove('hidden');
         if (rel.recipient_id === session.user.id) {
@@ -1538,6 +1405,7 @@
         return;
       }
 
+      // Cas 4 : Accepté -> discussion libre
       banner.classList.add('hidden');
       composerWrap.classList.remove('hidden');
       input.disabled = false;
@@ -1987,6 +1855,7 @@
           }
         });
 
+      // Synchronisation rapide et continue pour salon général, DM, demandes et membres
       window.__pollInterval = setInterval(() => {
         syncAllMessagesNow(false).catch(() => {});
       }, 1200);
@@ -2026,13 +1895,13 @@
 
       if (!roles || roles.length === 0) {
         document.addEventListener('visibilitychange', () => {
-          if (!document.hidden) syncAllMessagesNow(true).catch(() => {});
-        });
-        window.addEventListener('focus', () => {
-          syncAllMessagesNow(true).catch(() => {});
-        });
+      if (!document.hidden) syncAllMessagesNow(true).catch(() => {});
+    });
+    window.addEventListener('focus', () => {
+      syncAllMessagesNow(true).catch(() => {});
+    });
 
-        await loadRoles();
+    await loadRoles();
       }
 
       const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
@@ -2092,7 +1961,14 @@
       document.getElementById('mobile-drawer')?.classList.add('hidden');
       document.getElementById('mobile-drawer-backdrop')?.classList.add('hidden');
     }
+    document.getElementById('btn-mobile-members')?.addEventListener('click', () => {
+      document.getElementById('mobile-drawer')?.classList.remove('hidden');
+      document.getElementById('mobile-drawer-backdrop')?.classList.remove('hidden');
+    });
+    document.getElementById('btn-close-mobile-drawer')?.addEventListener('click', closeMobileDrawer);
+    document.getElementById('mobile-drawer-backdrop')?.addEventListener('click', closeMobileDrawer);
 
+    // EVENTS
     document.getElementById('dm-toast').addEventListener('click', async () => {
       document.getElementById('dm-toast').classList.add('hidden');
       if (!toastPeerId) return;
@@ -2133,6 +2009,15 @@
         }
       }
     }
+
+    const signupBtnEl = document.getElementById('btn-signup');
+    signupBtnEl.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (document.activeElement && document.activeElement !== signupBtnEl && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+      }
+      handleSignupSubmit();
+    });
 
     let isLoggingIn = false;
     let lastLoginAttemptAt = 0;
@@ -2199,6 +2084,20 @@
       });
     }
 
+    const loginBtnEl = document.getElementById('btn-login');
+    if (loginBtnEl) {
+      loginBtnEl.onclick = (e) => {
+        if (e) e.preventDefault();
+        handleLoginSubmit();
+      };
+      loginBtnEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.keyCode === 13 || e.keyCode === 32) {
+          e.preventDefault();
+          handleLoginSubmit();
+        }
+      });
+    }
+
     for (const fieldId of ['auth-username', 'auth-email', 'auth-password']) {
       document.getElementById(fieldId)?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.keyCode === 13) {
@@ -2208,11 +2107,42 @@
       });
     }
 
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      await refreshSession();
+    });
+
+    document.getElementById('btn-nav-chat').addEventListener('click', async () => {
+      if (me?.status !== 'approved' || me?.is_banned) return;
+      showView('chat');
+      await loadChat(true);
+    });
+
+    document.getElementById('btn-nav-dm').addEventListener('click', async () => {
+      if (me?.status !== 'approved' || me?.is_banned) return;
+      showView('dm');
+      await loadDmRequests();
+      renderDmList();
+      if (selectedDmPeer) await loadDmThread(true);
+    });
+
+    document.getElementById('btn-nav-profile').addEventListener('click', () => {
+      if (me?.status !== 'approved' || me?.is_banned) return;
+      syncProfileForm();
+      showView('profile');
+    });
+
     document.getElementById('me-sidebar-card').addEventListener('click', () => {
       if (me?.status === 'approved' && !me?.is_banned) {
         syncProfileForm();
         showView('profile');
       }
+    });
+
+    document.getElementById('btn-toggle-admin').addEventListener('click', async () => {
+      if (!canAdmin()) return;
+      showView('admin');
+      await loadAdmin();
     });
 
     async function sendChatMessage() {
@@ -2225,6 +2155,7 @@
       await loadChat(true);
     }
 
+    document.getElementById('btn-send-chat').addEventListener('click', sendChatMessage);
     document.getElementById('chat-input').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); sendChatMessage(); }
     });
@@ -2268,6 +2199,7 @@
 
       const rel = getDmRelation(selectedDmPeer.id);
 
+      // Si pas encore de demande, on crée la demande (avec message optionnel)
       if (!rel) {
         inp.value = '';
         await createDmRequest(selectedDmPeer.id, content);
@@ -2289,10 +2221,16 @@
       await loadDmThread(true);
     }
 
+    document.getElementById('btn-send-dm').addEventListener('click', sendDm);
     document.getElementById('dm-input').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); sendDm(); }
     });
 
+    // MODAL FICHE MEMBRE
+    document.getElementById('btn-close-modal').addEventListener('click', () => {
+      document.getElementById('member-modal').classList.add('hidden');
+      inspectedMember = null;
+    });
     document.getElementById('member-modal').addEventListener('click', (e) => {
       if (e.target.id === 'member-modal') {
         document.getElementById('member-modal').classList.add('hidden');
@@ -2354,6 +2292,7 @@
       await loadMembers();
     });
 
+    // ADMIN TABS & ACTIONS
     document.querySelectorAll('.admin-tab-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
@@ -2390,10 +2329,8 @@
       await loadAdmin();
     });
 
-    wireAllButtonsForOldTablets();
     await loadRoles();
     await refreshSession();
-    wireAllButtonsForOldTablets();
   </script>
 </body>
 </html>
