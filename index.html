@@ -192,6 +192,28 @@
       border-radius: 5px;
     }
     .chat-line:hover { background: rgba(255, 255, 255, 0.025); }
+    .system-announcement {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      margin: 4px 0;
+      border-radius: 5px;
+      background: rgba(88, 101, 242, 0.09);
+      border-left: 3px solid var(--accent);
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+    .system-announcement.ban {
+      background: rgba(218, 54, 51, 0.1);
+      border-left-color: var(--danger);
+      color: #ff9b95;
+    }
+    .system-announcement.join {
+      background: rgba(45, 164, 78, 0.1);
+      border-left-color: var(--ok);
+      color: #8ce99a;
+    }
     .chat-line:hover .msg-actions { opacity: 1; }
     .msg-actions { opacity: 0; transition: opacity 0.12s; margin-left: auto; }
     .chat-input-bar {
@@ -518,13 +540,31 @@
           <div class="box">
             <h2 style="margin:0 0 10px; font-size:15px;">Administration</h2>
             <div class="row" style="margin-bottom:14px;">
-              <button class="ghost sm admin-tab-btn active" data-atab="atab-users" id="atab-btn-users">Membres & Ban</button>
+              <button class="ghost sm admin-tab-btn active" data-atab="atab-pending" id="atab-btn-pending">En attente<span id="admin-pending-badge" class="notif-badge hidden">0</span></button>
+              <button class="ghost sm admin-tab-btn" data-atab="atab-users" id="atab-btn-users">Tous les membres</button>
               <button class="ghost sm admin-tab-btn" data-atab="atab-roles" id="atab-btn-roles">Rôles</button>
               <button class="ghost sm admin-tab-btn" data-atab="atab-words" id="atab-btn-words">Mots bannis</button>
               <button class="ghost sm admin-tab-btn" data-atab="atab-logs" id="atab-btn-logs">Logs</button>
             </div>
 
-            <div id="atab-users" class="admin-sec">
+            <div id="atab-pending" class="admin-sec">
+              <div class="muted" style="margin-bottom:8px;">Membres en attente d’acceptation. Dès qu’un membre est accepté ou refusé, il disparaît de cette liste.</div>
+              <div style="overflow-x:auto;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Membre</th>
+                      <th>Statut</th>
+                      <th>Décision</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-pending-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div id="atab-users" class="admin-sec hidden">
+              <div class="muted" style="margin-bottom:8px;">Gestion complète de tous les membres (statut, bannissement, rôle).</div>
               <div style="overflow-x:auto;">
                 <table>
                   <thead>
@@ -868,6 +908,38 @@
       document.getElementById('member-modal').classList.remove('hidden');
     }
 
+    function parseAnnouncement(content) {
+      if (typeof content !== 'string' || !content.startsWith('[ANNONCE]')) return null;
+      const body = content.replace(/^\[ANNONCE\]\s*/, '');
+      let kind = 'info';
+      if (/banni|ban/i.test(body)) kind = 'ban';
+      else if (/rejoint|approuvé|accepté/i.test(body)) kind = 'join';
+      return { body, kind };
+    }
+
+    async function postSystemAnnouncement(text) {
+      const msg = `[ANNONCE] ${text}`;
+      try {
+        if (session) {
+          await supabase.from('chat_messages').insert({ author_id: session.user.id, content: msg });
+        }
+      } catch (_) {}
+      try {
+        if (session) {
+          await supabase.from('audit_logs').insert({ action: 'announcement', details: text });
+        }
+      } catch (_) {}
+      if (!window.__localAnnouncements) window.__localAnnouncements = [];
+      window.__localAnnouncements.push({
+        id: 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        content: msg,
+        created_at: new Date().toISOString()
+      });
+      if (me?.status === 'approved' && !me?.is_banned) {
+        await loadChat();
+      }
+    }
+
     async function loadChat() {
       const { data } = await supabase
         .from('chat_messages')
@@ -881,7 +953,26 @@
         return;
       }
 
-      feed.innerHTML = data.map(msg => {
+      const merged = [...(data || [])];
+      if (window.__localAnnouncements && window.__localAnnouncements.length > 0) {
+        const existingBodies = new Set(merged.map(x => x.content));
+        for (const loc of window.__localAnnouncements) {
+          if (!existingBodies.has(loc.content)) merged.push(loc);
+        }
+      }
+
+      feed.innerHTML = merged.map(msg => {
+        const ann = parseAnnouncement(msg.content);
+        const timeStr = new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        if (ann) {
+          return `
+            <div class="system-announcement ${ann.kind}">
+              <span>📢</span>
+              <span style="flex:1;">${esc(ann.body)}</span>
+              <span class="muted">${timeStr}</span>
+            </div>
+          `;
+        }
         const p = msg.profiles;
         const col = /^#[0-9a-fA-F]{6}$/.test(p?.profile_color || '') ? p.profile_color : '#eceff4';
         const canDel = session && (session.user.id === msg.author_id || perms.can_moderate);
@@ -892,7 +983,7 @@
               <div class="row" style="gap:6px;">
                 <strong style="color:${col}; cursor:pointer;" data-mid="${msg.author_id}">${esc(p?.username || 'Membre')}</strong>
                 <span class="tag">${esc(p?.role || '')}</span>
-                <span class="muted">${new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+                <span class="muted">${timeStr}</span>
               </div>
               <div style="margin-top:2px; white-space:pre-wrap; word-break:break-word;">${esc(msg.content)}</div>
             </div>
@@ -908,8 +999,11 @@
       });
       feed.querySelectorAll('.del-chat-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
+          const targetMsg = (data || []).find(x => Number(x.id) === Number(btn.dataset.id));
+          const authorName = targetMsg?.profiles?.username || 'un membre';
           const { error } = await supabase.from('chat_messages').delete().eq('id', Number(btn.dataset.id));
           if (error) return setNotice(error.message, true);
+          await postSystemAnnouncement(`Un message de ${authorName} a été supprimé par ${me?.username || 'un administrateur'}.`);
           await loadChat();
         });
       });
@@ -1163,6 +1257,55 @@
 
     async function loadAdmin() {
       await loadMembers();
+
+      const pendingUsers = members.filter(u => u.status === 'pending');
+      const pBadge = document.getElementById('admin-pending-badge');
+      if (pBadge) {
+        pBadge.textContent = pendingUsers.length;
+        pBadge.classList.toggle('hidden', pendingUsers.length === 0);
+      }
+
+      const pendingTbody = document.getElementById('admin-pending-tbody');
+      if (pendingTbody) {
+        pendingTbody.innerHTML = pendingUsers.map(u => `
+          <tr>
+            <td>
+              <div class="row" style="gap:6px; cursor:pointer;" data-open-mid="${u.id}">
+                <img class="avatar-img avatar-sm" src="${esc(u.avatar_url || FALLBACK_AVATAR)}" alt="" />
+                <strong>${esc(u.username)}</strong>
+              </div>
+            </td>
+            <td><span class="tag pending">En attente</span></td>
+            <td class="row">
+              ${perms.can_approve_users ? `
+                <button class="ok sm p-decide" data-uid="${u.id}" data-uname="${esc(u.username)}" data-st="approved">Accepter</button>
+                <button class="danger sm p-decide" data-uid="${u.id}" data-uname="${esc(u.username)}" data-st="rejected">Refuser</button>
+              ` : '<span class="muted">Permission requise</span>'}
+            </td>
+          </tr>
+        `).join('') || '<tr><td colspan="3" class="muted">Aucun membre en attente d’acceptation.</td></tr>';
+
+        pendingTbody.querySelectorAll('[data-open-mid]').forEach(el => {
+          el.addEventListener('click', () => openMemberModal(el.dataset.openMid));
+        });
+
+        pendingTbody.querySelectorAll('.p-decide').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const st = btn.dataset.st;
+            const uname = btn.dataset.uname;
+            const { error } = await supabase.from('profiles').update({ status: st }).eq('id', btn.dataset.uid);
+            if (error) return setNotice(error.message, true);
+            if (st === 'approved') {
+              await postSystemAnnouncement(`${uname} a rejoint le forum !`);
+              setNotice(`${uname} accepté.`);
+            } else {
+              setNotice(`${uname} refusé.`);
+            }
+            await loadAdmin();
+          });
+        });
+      }
+
       const tbody = document.getElementById('admin-users-tbody');
       tbody.innerHTML = members.map(u => {
         const isSelf = session && u.id === session.user.id;
@@ -1204,8 +1347,12 @@
 
       tbody.querySelectorAll('.a-status').forEach(btn => {
         btn.addEventListener('click', async () => {
+          const target = members.find(x => x.id === btn.dataset.uid);
           const { error } = await supabase.from('profiles').update({ status: btn.dataset.st }).eq('id', btn.dataset.uid);
           if (error) return setNotice(error.message, true);
+          if (btn.dataset.st === 'approved' && target) {
+            await postSystemAnnouncement(`${target.username} a rejoint le forum !`);
+          }
           setNotice('Statut mis à jour.');
           await loadAdmin();
         });
@@ -1223,10 +1370,16 @@
 
       tbody.querySelectorAll('.a-ban').forEach(btn => {
         btn.addEventListener('click', async () => {
+          const target = members.find(x => x.id === btn.dataset.uid);
           const ban = btn.dataset.ban === '1';
           const reason = ban ? (prompt('Motif du bannissement (optionnel) :') || '') : '';
           const { error } = await supabase.from('profiles').update({ is_banned: ban, ban_reason: reason }).eq('id', btn.dataset.uid);
           if (error) return setNotice(error.message, true);
+          if (ban && target) {
+            await postSystemAnnouncement(`${target.username} a été banni${reason ? ` (${reason})` : ''}.`);
+          } else if (!ban && target) {
+            await postSystemAnnouncement(`${target.username} a été débanni.`);
+          }
           setNotice(ban ? 'Membre banni.' : 'Membre débanni.');
           await loadAdmin();
         });
@@ -1289,7 +1442,17 @@
           if (me?.status === 'approved' && !me?.is_banned) loadChat();
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async (payload) => {
+          const prev = members.find(x => x.id === payload.new?.id);
+          const next = payload.new;
           await loadMembers();
+          if (next && prev) {
+            if (prev.status !== 'approved' && next.status === 'approved') {
+              await postSystemAnnouncement(`${next.username} a rejoint le forum !`);
+            }
+            if (!prev.is_banned && next.is_banned) {
+              await postSystemAnnouncement(`${next.username} a été banni${next.ban_reason ? ` (${next.ban_reason})` : ''}.`);
+            }
+          }
           if (session && payload.new?.id === session.user.id) {
             await refreshSession(true);
           }
@@ -1636,18 +1799,22 @@
     });
     document.getElementById('modal-ban-btn').addEventListener('click', async () => {
       if (!inspectedMember) return;
+      const uname = inspectedMember.username;
       const reason = prompt('Motif du bannissement (optionnel) :') || '';
       const { error } = await supabase.from('profiles').update({ is_banned: true, ban_reason: reason }).eq('id', inspectedMember.id);
       if (error) return setNotice(error.message, true);
-      setNotice(`${inspectedMember.username} a été banni.`);
+      await postSystemAnnouncement(`${uname} a été banni${reason ? ` (${reason})` : ''}.`);
+      setNotice(`${uname} a été banni.`);
       await loadMembers();
       openMemberModal(inspectedMember.id);
     });
     document.getElementById('modal-unban-btn').addEventListener('click', async () => {
       if (!inspectedMember) return;
+      const uname = inspectedMember.username;
       const { error } = await supabase.from('profiles').update({ is_banned: false, ban_reason: '' }).eq('id', inspectedMember.id);
       if (error) return setNotice(error.message, true);
-      setNotice(`${inspectedMember.username} a été débanni.`);
+      await postSystemAnnouncement(`${uname} a été débanni.`);
+      setNotice(`${uname} a été débanni.`);
       await loadMembers();
       openMemberModal(inspectedMember.id);
     });
@@ -1661,8 +1828,10 @@
     });
     document.getElementById('modal-approve-btn').addEventListener('click', async () => {
       if (!inspectedMember) return;
+      const uname = inspectedMember.username;
       const { error } = await supabase.from('profiles').update({ status: 'approved' }).eq('id', inspectedMember.id);
       if (error) return setNotice(error.message, true);
+      await postSystemAnnouncement(`${uname} a rejoint le forum !`);
       setNotice('Membre approuvé.');
       await loadMembers();
     });
