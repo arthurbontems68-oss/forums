@@ -3,99 +3,208 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mon Forum — Connexion requise</title>
+  <title>Mon Forum — Espace Communautaire</title>
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --subcard: #0f172a;
-      --text: #f8fafc;
+      --bg: #090d16;
+      --bg-elevated: #111827;
+      --card: #161f33;
+      --subcard: #0d1322;
+      --hover: #1e293b;
+      --text: #f1f5f9;
       --muted: #94a3b8;
       --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.14);
       --ok: #22c55e;
       --warn: #f59e0b;
       --danger: #ef4444;
-      --border: #334155;
+      --border: rgba(148, 163, 184, 0.16);
+      --shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, sans-serif;
-      background: var(--bg);
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at top right, #131c31 0%, var(--bg) 55%);
       color: var(--text);
       line-height: 1.5;
+      min-height: 100vh;
     }
-    .container { max-width: 1120px; margin: 0 auto; padding: 24px 16px; }
+
+    /* SCROLLBARS */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.45); }
+
+    /* AUTH SCREEN */
     .auth-screen {
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 20px;
     }
     .auth-box {
       width: 100%;
-      max-width: 420px;
-      background: var(--card);
+      max-width: 430px;
+      background: rgba(22, 31, 51, 0.9);
+      backdrop-filter: blur(14px);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: var(--shadow);
     }
-    .auth-box h1 { margin-top: 0; margin-bottom: 6px; font-size: 1.5rem; }
-    .auth-box input, .auth-box button { width: 100%; margin-bottom: 10px; }
+    .auth-box h1 { margin: 0 0 6px; font-size: 1.65rem; letter-spacing: -0.02em; }
+    .auth-box input, .auth-box button { width: 100%; margin-bottom: 12px; }
+
+    /* LAYOUT & HEADER */
+    .container { max-width: 1360px; margin: 0 auto; padding: 18px 20px; }
     header {
       display: flex; flex-wrap: wrap; justify-content: space-between;
-      align-items: center; gap: 16px;
-      border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;
+      align-items: center; gap: 14px;
+      background: rgba(22, 31, 51, 0.78);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-logo {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #6366f1);
+      display: grid; place-items: center; font-weight: 800; color: #090d16; font-size: 1.1rem;
+    }
+    .live-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 0.75rem; font-weight: 600; color: var(--ok);
+      background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.3);
+      padding: 3px 9px; border-radius: 999px;
+    }
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--ok);
+      box-shadow: 0 0 8px var(--ok); animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* CARDS & CONTROLS */
     .card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 10px; padding: 16px; margin-bottom: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22);
     }
     .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-    input, textarea, select, button {
-      font: inherit; border-radius: 8px; border: 1px solid var(--border);
-      padding: 8px 12px; background: var(--subcard); color: var(--text);
+    input, textarea, select {
+      font: inherit; font-size: 0.92rem;
+      border-radius: 10px; border: 1px solid var(--border);
+      padding: 9px 13px; background: var(--subcard); color: var(--text);
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    button { background: var(--accent); color: #082f49; font-weight: 600; border: none; cursor: pointer; }
-    button.secondary { background: #334155; color: var(--text); }
-    button.ok { background: var(--ok); color: #052e16; }
-    button.danger { background: var(--danger); color: #fff; }
-    button.sm { padding: 4px 10px; font-size: 0.85rem; }
+    input:focus, textarea:focus, select:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    button {
+      font: inherit; font-size: 0.9rem; font-weight: 600;
+      border-radius: 10px; padding: 9px 14px;
+      background: var(--accent); color: #061322;
+      border: none; cursor: pointer;
+      transition: transform 0.1s, opacity 0.15s, background 0.15s;
+    }
+    button:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.secondary { background: rgba(148, 163, 184, 0.14); color: var(--text); border: 1px solid var(--border); }
+    button.secondary.nav-active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    button.ok { background: var(--ok); color: #042310; }
+    button.danger { background: rgba(239, 68, 68, 0.16); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.35); }
+    button.danger:hover { background: var(--danger); color: #fff; }
+    button.sm { padding: 5px 10px; font-size: 0.8rem; border-radius: 8px; }
+
     .badge {
-      display: inline-block; background: var(--subcard); border: 1px solid var(--accent);
-      color: var(--accent); font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; margin-left: 6px;
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--subcard); border: 1px solid var(--accent);
+      color: var(--accent); font-size: 0.72rem; font-weight: 600;
+      padding: 2px 8px; border-radius: 999px; margin-left: 6px;
     }
     .badge.pending { border-color: var(--warn); color: var(--warn); }
     .badge.rejected { border-color: var(--danger); color: var(--danger); }
-    .meta { color: var(--muted); font-size: 0.85rem; }
+    .meta { color: var(--muted); font-size: 0.83rem; }
     .hidden { display: none !important; }
-    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-    .tab-btn.active { outline: 2px solid var(--accent); }
-    .grid-forum { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
-    .grid-dm { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
-    @media (max-width: 780px) {
-      .grid-forum, .grid-dm { grid-template-columns: 1fr; }
+
+    /* 3-COLUMN FORUM WORKSPACE */
+    .workspace-forum {
+      display: grid;
+      grid-template-columns: 240px 300px 1fr;
+      gap: 16px;
+      align-items: start;
     }
-    .topic-item, .user-item {
-      padding: 10px; border-radius: 8px; cursor: pointer;
+    .grid-dm { display: grid; grid-template-columns: 280px 1fr; gap: 18px; }
+    @media (max-width: 1050px) {
+      .workspace-forum { grid-template-columns: 220px 1fr; }
+      .workspace-forum > main { grid-column: 1 / -1; }
+    }
+    @media (max-width: 720px) {
+      .workspace-forum, .grid-dm { grid-template-columns: 1fr; }
+    }
+
+    .channel-item, .topic-item, .user-item {
+      padding: 10px 12px; border-radius: 10px; cursor: pointer;
       border: 1px solid transparent; margin-bottom: 6px;
+      transition: background 0.15s, border-color 0.15s;
     }
-    .topic-item:hover, .topic-item.active, .user-item:hover, .user-item.active {
-      background: var(--subcard); border-color: var(--accent);
+    .channel-item:hover, .topic-item:hover, .user-item:hover { background: var(--hover); }
+    .channel-item.active, .topic-item.active, .user-item.active {
+      background: var(--accent-soft); border-color: var(--accent);
     }
+    .channel-header {
+      display: flex; justify-content: space-between; align-items: center;
+      font-weight: 600; font-size: 0.94rem;
+    }
+    .count-pill {
+      font-size: 0.72rem; background: var(--subcard); color: var(--muted);
+      padding: 1px 7px; border-radius: 99px; border: 1px solid var(--border);
+    }
+
     .avatar-dot {
-      display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+      display: inline-block; width: 10px; height: 10px; border-radius: 50%;
       margin-right: 6px; vertical-align: middle;
     }
-    .dm-msg {
-      padding: 10px 12px; border-radius: 8px; margin-bottom: 8px;
-      background: var(--subcard); border: 1px solid var(--border);
+    .post-card {
+      background: var(--subcard);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      transition: border-color 0.15s;
     }
-    .dm-msg.mine { border-color: var(--accent); }
-    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
-    .banner { color: var(--accent); margin-bottom: 12px; min-height: 22px; font-weight: 500; }
+    .post-card:hover { border-color: rgba(148, 163, 184, 0.35); }
+    .post-body { margin-top: 8px; white-space: pre-wrap; word-break: break-word; font-size: 0.95rem; }
+
+    .dm-msg {
+      padding: 10px 14px; border-radius: 12px; margin-bottom: 8px;
+      background: var(--subcard); border: 1px solid var(--border);
+      max-width: 82%;
+    }
+    .dm-msg.mine {
+      margin-left: auto;
+      background: var(--accent-soft);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .tab-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .banner {
+      color: var(--accent); margin-bottom: 12px; min-height: 22px;
+      font-weight: 500; font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -104,8 +213,8 @@
   <div id="guest-screen" class="auth-screen">
     <div class="auth-box">
       <h1>Accès au Forum</h1>
-      <p class="meta" style="margin-top:0; margin-bottom:16px;">
-        Connecte-toi ou crée un compte pour accéder aux discussions.
+      <p class="meta" style="margin-top:0; margin-bottom:18px;">
+        Connecte-toi ou crée un compte pour rejoindre les salons de discussion.
       </p>
       <div id="guest-banner" class="banner"></div>
 
@@ -121,14 +230,20 @@
   <!-- APPLICATION FORUM -->
   <div id="app-screen" class="container hidden">
     <header>
-      <div>
-        <h1 style="margin:0;">Mon Forum</h1>
-        <div class="meta">Discussions, profils personnalisés & messages privés</div>
+      <div class="brand">
+        <div class="brand-logo">F</div>
+        <div>
+          <div class="row" style="gap:8px;">
+            <h1 style="margin:0; font-size:1.25rem;">Mon Forum</h1>
+            <span class="live-pill" id="live-status"><span class="live-dot"></span>En direct</span>
+          </div>
+          <div class="meta">Salons thématiques, profils personnalisés & messagerie instantanée</div>
+        </div>
       </div>
 
       <div class="row">
         <span id="current-user-label"></span>
-        <button id="btn-nav-forum" class="secondary">Forum</button>
+        <button id="btn-nav-forum" class="secondary nav-active">Salons</button>
         <button id="btn-nav-dm" class="secondary">Messages (DM)</button>
         <button id="btn-nav-profile" class="secondary">Mon Profil</button>
         <button id="btn-toggle-admin" class="hidden">Panneau Admin</button>
@@ -138,26 +253,26 @@
 
     <div id="status-banner" class="banner"></div>
 
-    <!-- MESSAGE SI COMPTE NON ENCORE VALIDÉ -->
+    <!-- COMPTE EN ATTENTE -->
     <section id="pending-notice" class="card hidden">
       <h2 style="margin-top:0;">Compte en attente de validation</h2>
       <p class="meta" style="margin-bottom:0;">
-        Ton inscription a bien été enregistrée. Un administrateur doit valider ton accès avant que tu puisses accéder au forum, aux DM et à la personnalisation.
+        Ton inscription a bien été enregistrée. Un administrateur doit valider ton accès avant que tu puisses accéder aux salons, aux DM et à la personnalisation.
       </p>
     </section>
 
     <!-- PERSONNALISATION DU PROFIL -->
     <section id="profile-panel" class="card hidden">
       <h2 style="margin-top:0;">Personnaliser mon profil</h2>
-      <div class="row" style="margin-bottom:12px;">
-        <label class="meta">Pseudo :
-          <input type="text" id="profile-username-input" placeholder="Ton pseudo" />
+      <div class="row" style="margin-bottom:14px;">
+        <label class="meta">Pseudo :<br/>
+          <input type="text" id="profile-username-input" placeholder="Ton pseudo" style="margin-top:4px;" />
         </label>
-        <label class="meta">Couleur du badge :
-          <input type="color" id="profile-color-input" value="#38bdf8" />
+        <label class="meta">Couleur du badge & thème :<br/>
+          <input type="color" id="profile-color-input" value="#38bdf8" style="margin-top:4px; height:40px; width:70px; padding:3px;" />
         </label>
       </div>
-      <div style="margin-bottom:12px;">
+      <div style="margin-bottom:14px;">
         <label class="meta" style="display:block; margin-bottom:4px;">Bio :</label>
         <textarea id="profile-bio-input" rows="3" placeholder="Présente-toi en quelques mots..." style="width:100%;"></textarea>
       </div>
@@ -166,7 +281,7 @@
 
     <!-- MESSAGES PRIVÉS (DM) -->
     <section id="dm-panel" class="card hidden">
-      <h2 style="margin-top:0;">Messages privés (DM)</h2>
+      <h2 style="margin-top:0;">Messages privés en direct (DM)</h2>
       <div class="grid-dm">
         <div>
           <div class="meta" style="margin-bottom:8px;">Membres approuvés</div>
@@ -174,9 +289,9 @@
         </div>
         <div>
           <h3 id="dm-chat-title" style="margin-top:0;">Choisis un membre pour discuter</h3>
-          <div id="dm-messages-box" style="max-height:340px; overflow-y:auto; margin-bottom:12px;"></div>
+          <div id="dm-messages-box" style="height:360px; overflow-y:auto; padding-right:6px; margin-bottom:12px;"></div>
           <div id="dm-send-box" class="row hidden">
-            <input type="text" id="dm-input" placeholder="Écris un message privé..." style="flex:1;" />
+            <input type="text" id="dm-input" placeholder="Écris un message privé (Entrée pour envoyer)..." style="flex:1;" />
             <button id="btn-send-dm">Envoyer</button>
           </div>
         </div>
@@ -185,31 +300,44 @@
 
     <!-- PANNEAU ADMIN -->
     <section id="admin-panel" class="card hidden">
-      <div class="row" style="justify-content:space-between; margin-bottom:10px;">
+      <div class="row" style="justify-content:space-between; margin-bottom:12px;">
         <h2 style="margin:0;">Panneau d'administration</h2>
         <span class="meta" id="admin-perms-summary"></span>
       </div>
 
       <div class="tabs">
         <button class="secondary tab-btn active" data-tab="tab-users" id="nav-tab-users">Comptes & Rôles</button>
+        <button class="secondary tab-btn" data-tab="tab-channels" id="nav-tab-channels">Salons</button>
         <button class="secondary tab-btn" data-tab="tab-roles" id="nav-tab-roles">Créer un rôle</button>
         <button class="secondary tab-btn" data-tab="tab-words" id="nav-tab-words">Mots bannis</button>
         <button class="secondary tab-btn" data-tab="tab-logs" id="nav-tab-logs">Logs système</button>
       </div>
 
       <div id="tab-users" class="admin-tab">
-        <table>
-          <thead>
-            <tr>
-              <th>Pseudo</th>
-              <th>Bio</th>
-              <th>Statut</th>
-              <th>Validation</th>
-              <th>Rôle</th>
-            </tr>
-          </thead>
-          <tbody id="admin-users-tbody"></tbody>
-        </table>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Pseudo</th>
+                <th>Bio</th>
+                <th>Statut</th>
+                <th>Validation</th>
+                <th>Rôle</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="tab-channels" class="admin-tab hidden">
+        <div class="row" style="margin-bottom:14px;">
+          <input type="text" id="channel-icon-input" placeholder="Icône (ex: 🔥)" style="width:90px;" value="💬" />
+          <input type="text" id="channel-name-input" placeholder="Nom du salon (ex: Musique)" />
+          <input type="text" id="channel-desc-input" placeholder="Description courte..." style="flex:1; min-width:200px;" />
+          <button id="btn-add-channel">Créer le salon</button>
+        </div>
+        <div id="admin-channels-list"></div>
       </div>
 
       <div id="tab-roles" class="admin-tab hidden">
@@ -217,7 +345,7 @@
           <input type="text" id="role-name" placeholder="Nom du rôle (ex: super_modo)" />
           <label class="meta"><input type="checkbox" id="perm-moderate" /> Modérer messages</label>
           <label class="meta"><input type="checkbox" id="perm-approve" /> Accepter/refuser comptes</label>
-          <label class="meta"><input type="checkbox" id="perm-roles" /> Gérer les rôles</label>
+          <label class="meta"><input type="checkbox" id="perm-roles" /> Gérer les rôles & salons</label>
           <label class="meta"><input type="checkbox" id="perm-words" /> Gérer mots bannis</label>
           <label class="meta"><input type="checkbox" id="perm-logs" /> Voir les logs</label>
           <button id="btn-add-role">Ajouter le rôle</button>
@@ -238,36 +366,62 @@
           <span class="meta">50 dernières actions enregistrées</span>
           <button class="secondary sm" id="btn-refresh-logs">Actualiser</button>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Action</th>
-              <th>Détails</th>
-            </tr>
-          </thead>
-          <tbody id="admin-logs-tbody"></tbody>
-        </table>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Action</th>
+                <th>Détails</th>
+              </tr>
+            </thead>
+            <tbody id="admin-logs-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
-    <!-- CONTENU DU FORUM -->
-    <div id="forum-content" class="grid-forum hidden">
-      <aside class="card">
-        <h2 style="margin-top:0;">Sujets</h2>
-        <div id="new-topic-box" style="margin-bottom:14px;">
-          <input type="text" id="topic-title-input" placeholder="Nouveau sujet..." style="width:100%; margin-bottom:8px;" />
-          <button id="btn-create-topic" style="width:100%;">Créer le sujet</button>
+    <!-- ESPACE PRINCIPAL À 3 COLONNES : SALONS -> SUJETS -> MESSAGES -->
+    <div id="forum-content" class="workspace-forum hidden">
+      <!-- COLONNE 1 : SALONS -->
+      <aside class="card" style="padding:14px;">
+        <div class="row" style="justify-content:space-between; margin-bottom:10px;">
+          <h3 style="margin:0; font-size:0.95rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted);">Salons</h3>
         </div>
-        <div id="topics-list"></div>
+        <div id="channels-list"></div>
       </aside>
 
+      <!-- COLONNE 2 : SUJETS DU SALON ACTIF -->
+      <section class="card" style="padding:14px;">
+        <div style="margin-bottom:12px;">
+          <h3 id="active-channel-heading" style="margin:0 0 2px; font-size:1.05rem;">Sujets</h3>
+          <div id="active-channel-desc" class="meta"></div>
+        </div>
+
+        <div id="new-topic-box" style="margin-bottom:14px;">
+          <input type="text" id="topic-title-input" placeholder="Titre du nouveau sujet..." style="width:100%; margin-bottom:8px;" />
+          <button id="btn-create-topic" style="width:100%;">+ Nouveau sujet</button>
+        </div>
+        <div id="topics-list" style="max-height:540px; overflow-y:auto;"></div>
+      </section>
+
+      <!-- COLONNE 3 : FIL DE DISCUSSION -->
       <main class="card">
-        <h2 id="selected-topic-title" style="margin-top:0;">Sélectionne un sujet</h2>
-        <div id="posts-list"></div>
-        <div id="new-post-box" class="hidden" style="margin-top:16px;">
-          <textarea id="post-content-input" rows="3" placeholder="Écris ta réponse..." style="width:100%; margin-bottom:8px;"></textarea>
-          <button id="btn-create-post">Publier</button>
+        <div class="row" style="justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:14px;">
+          <div>
+            <h2 id="selected-topic-title" style="margin:0; font-size:1.25rem;">Sélectionne un sujet</h2>
+            <div id="selected-topic-meta" class="meta"></div>
+          </div>
+          <button id="btn-delete-topic" class="danger sm hidden">Supprimer le sujet</button>
+        </div>
+
+        <div id="posts-list" style="max-height:500px; overflow-y:auto; padding-right:4px;"></div>
+
+        <div id="new-post-box" class="hidden" style="margin-top:16px; border-top:1px solid var(--border); padding-top:14px;">
+          <textarea id="post-content-input" rows="3" placeholder="Écris ta réponse dans ce salon..." style="width:100%; margin-bottom:8px;"></textarea>
+          <div class="row" style="justify-content:flex-end;">
+            <button id="btn-create-post">Publier la réponse</button>
+          </div>
         </div>
       </main>
     </div>
@@ -285,15 +439,28 @@
     let profile = null;
     let perms = {};
     let roles = [];
-    let topics = [];
+    let channels = [];
+    let allTopics = [];
+    let selectedChannelId = null;
     let selectedTopicId = null;
     let selectedDmUser = null;
     let approvedMembers = [];
+    let realtimeSub = null;
+    let activeSection = 'forum';
 
-    const notify = (msg) => {
-      document.getElementById('status-banner').textContent = msg || '';
-      document.getElementById('guest-banner').textContent = msg || '';
+    const notify = (msg, isError = false) => {
+      const b1 = document.getElementById('status-banner');
+      const b2 = document.getElementById('guest-banner');
+      b1.style.color = isError ? 'var(--danger)' : 'var(--accent)';
+      b2.style.color = isError ? 'var(--danger)' : 'var(--accent)';
+      b1.textContent = msg || '';
+      b2.textContent = msg || '';
+      if (msg) {
+        clearTimeout(window.__notifyTimer);
+        window.__notifyTimer = setTimeout(() => { b1.textContent = ''; b2.textContent = ''; }, 5000);
+      }
     };
+
     const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
 
     function applyAccentColor(color) {
@@ -302,9 +469,10 @@
     }
 
     function renderAuthorTag(p) {
-      const color = /^#[0-9a-fA-F]{6}$/.test(p?.profile_color || '') ? p.profile_color : '#38bdf8';
-      const bioAttr = p?.bio ? `title="${esc(p.bio)}"` : '';
-      return `<span class="avatar-dot" style="background:${color};"></span><strong ${bioAttr}>${esc(p?.username)}</strong><span class="badge" style="border-color:${color}; color:${color};">${esc(p?.role)}</span>`;
+      if (!p) return '<span class="meta">Membre inconnu</span>';
+      const color = /^#[0-9a-fA-F]{6}$/.test(p.profile_color || '') ? p.profile_color : '#38bdf8';
+      const bioAttr = p.bio ? `title="${esc(p.bio)}"` : '';
+      return `<span class="avatar-dot" style="background:${color};"></span><strong ${bioAttr}>${esc(p.username)}</strong><span class="badge" style="border-color:${color}; color:${color};">${esc(p.role)}</span>`;
     }
 
     function hasAnyAdminPerm(p) {
@@ -312,9 +480,14 @@
     }
 
     function switchSection(sectionName) {
+      activeSection = sectionName;
       document.getElementById('forum-content').classList.toggle('hidden', sectionName !== 'forum');
       document.getElementById('dm-panel').classList.toggle('hidden', sectionName !== 'dm');
       document.getElementById('profile-panel').classList.toggle('hidden', sectionName !== 'profile');
+
+      document.getElementById('btn-nav-forum').classList.toggle('nav-active', sectionName === 'forum');
+      document.getElementById('btn-nav-dm').classList.toggle('nav-active', sectionName === 'dm');
+      document.getElementById('btn-nav-profile').classList.toggle('nav-active', sectionName === 'profile');
     }
 
     async function loadRoles() {
@@ -324,24 +497,224 @@
         const activePerms = [
           r.can_moderate && 'Modération',
           r.can_approve_users && 'Validation comptes',
-          r.can_manage_roles && 'Gestion rôles',
+          r.can_manage_roles && 'Rôles & salons',
           r.can_manage_banned_words && 'Mots bannis',
           r.can_view_logs && 'Logs'
         ].filter(Boolean).join(', ') || 'Aucune permission spéciale';
-        return `<div><strong>${esc(r.name)}</strong> : ${activePerms}</div>`;
+        return `<div style="margin-bottom:4px;"><strong>${esc(r.name)}</strong> : ${activePerms}</div>`;
       }).join('');
     }
 
-    async function refreshUser() {
+    async function loadChannelsAndTopics() {
+      const [{ data: chData }, { data: tpData }] = await Promise.all([
+        supabase.from('channels').select('*').order('id', { ascending: true }),
+        supabase.from('topics')
+          .select('id, title, channel_id, created_at, author_id, profiles(username, role, bio, profile_color)')
+          .order('created_at', { ascending: false })
+      ]);
+
+      channels = chData || [];
+      allTopics = tpData || [];
+
+      if (channels.length > 0 && !channels.some(c => c.id === selectedChannelId)) {
+        selectedChannelId = channels[0].id;
+      }
+
+      renderChannels();
+      renderTopicsForChannel();
+    }
+
+    function renderChannels() {
+      const el = document.getElementById('channels-list');
+      if (channels.length === 0) {
+        el.innerHTML = '<div class="meta">Aucun salon disponible.</div>';
+        return;
+      }
+
+      el.innerHTML = channels.map(c => {
+        const count = allTopics.filter(t => t.channel_id === c.id).length;
+        const active = c.id === selectedChannelId ? 'active' : '';
+        return `
+          <div class="channel-item ${active}" data-cid="${c.id}">
+            <div class="channel-header">
+              <span>${esc(c.icon || '💬')} ${esc(c.name)}</span>
+              <span class="count-pill">${count}</span>
+            </div>
+            ${c.description ? `<div class="meta" style="font-size:0.78rem; margin-top:2px;">${esc(c.description)}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+
+      el.querySelectorAll('.channel-item').forEach(item => {
+        item.addEventListener('click', () => {
+          selectedChannelId = Number(item.dataset.cid);
+          selectedTopicId = null;
+          renderChannels();
+          renderTopicsForChannel();
+        });
+      });
+    }
+
+    async function renderTopicsForChannel() {
+      const currentChannel = channels.find(c => c.id === selectedChannelId);
+      document.getElementById('active-channel-heading').textContent = currentChannel
+        ? `${currentChannel.icon || '💬'} ${currentChannel.name}`
+        : 'Sujets';
+      document.getElementById('active-channel-desc').textContent = currentChannel?.description || '';
+
+      const filtered = allTopics.filter(t => t.channel_id === selectedChannelId);
+      const listEl = document.getElementById('topics-list');
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<div class="meta">Aucun sujet dans ce salon. Crée le premier !</div>';
+        selectedTopicId = null;
+        document.getElementById('selected-topic-title').textContent = 'Aucun sujet sélectionné';
+        document.getElementById('selected-topic-meta').textContent = '';
+        document.getElementById('posts-list').innerHTML = '<div class="meta">Crée un sujet à gauche pour démarrer la discussion.</div>';
+        document.getElementById('new-post-box').classList.add('hidden');
+        document.getElementById('btn-delete-topic').classList.add('hidden');
+        return;
+      }
+
+      if (!filtered.some(t => t.id === selectedTopicId)) {
+        selectedTopicId = filtered[0].id;
+      }
+
+      listEl.innerHTML = filtered.map(t => `
+        <div class="topic-item ${t.id === selectedTopicId ? 'active' : ''}" data-tid="${t.id}">
+          <div style="font-weight:600; margin-bottom:3px;">${esc(t.title)}</div>
+          <div class="meta">par ${renderAuthorTag(t.profiles)}</div>
+        </div>
+      `).join('');
+
+      listEl.querySelectorAll('.topic-item').forEach(el => {
+        el.addEventListener('click', async () => {
+          selectedTopicId = Number(el.dataset.tid);
+          await renderTopicsForChannel();
+        });
+      });
+
+      const currentTopic = filtered.find(t => t.id === selectedTopicId);
+      if (currentTopic) {
+        document.getElementById('selected-topic-title').textContent = currentTopic.title;
+        document.getElementById('selected-topic-meta').innerHTML =
+          `Lancé par ${renderAuthorTag(currentTopic.profiles)} · ${new Date(currentTopic.created_at).toLocaleString('fr-FR')}`;
+        document.getElementById('new-post-box').classList.remove('hidden');
+
+        const canDelTopic = session && (session.user.id === currentTopic.author_id || perms.can_moderate);
+        document.getElementById('btn-delete-topic').classList.toggle('hidden', !canDelTopic);
+
+        await loadPosts(selectedTopicId);
+      }
+    }
+
+    async function loadPosts(topicId, keepScroll = false) {
+      if (!topicId) return;
+      const { data } = await supabase
+        .from('posts')
+        .select('id, content, created_at, author_id, profiles(username, role, bio, profile_color)')
+        .eq('topic_id', topicId)
+        .order('created_at', { ascending: true });
+
+      const postsEl = document.getElementById('posts-list');
+      if (!data || data.length === 0) {
+        postsEl.innerHTML = '<div class="meta">Aucun message dans ce sujet pour le moment.</div>';
+        return;
+      }
+
+      postsEl.innerHTML = data.map(p => {
+        const canDel = session && (session.user.id === p.author_id || perms.can_moderate);
+        return `
+          <div class="post-card">
+            <div class="row" style="justify-content:space-between;">
+              <div>
+                ${renderAuthorTag(p.profiles)}
+                <span class="meta">· ${new Date(p.created_at).toLocaleString('fr-FR')}</span>
+              </div>
+              ${canDel ? `<button class="danger sm del-post" data-pid="${p.id}">Supprimer</button>` : ''}
+            </div>
+            ${p.profiles?.bio ? `<div class="meta" style="margin-top:3px; font-style:italic;">${esc(p.profiles.bio)}</div>` : ''}
+            <div class="post-body">${esc(p.content)}</div>
+          </div>
+        `;
+      }).join('');
+
+      if (!keepScroll) {
+        postsEl.scrollTop = postsEl.scrollHeight;
+      }
+
+      postsEl.querySelectorAll('.del-post').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const { error } = await supabase.from('posts').delete().eq('id', Number(btn.dataset.pid));
+          if (error) return notify('Suppression refusée : ' + error.message, true);
+          notify('Message supprimé.');
+        });
+      });
+    }
+
+    function setupRealtime() {
+      if (realtimeSub) {
+        supabase.removeChannel(realtimeSub);
+      }
+
+      realtimeSub = supabase
+        .channel('forum-live-sync')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, async (payload) => {
+          const changedTopicId = payload.new?.topic_id || payload.old?.topic_id;
+          if (changedTopicId && Number(changedTopicId) === selectedTopicId) {
+            await loadPosts(selectedTopicId);
+          }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'topics' }, async () => {
+          await loadChannelsAndTopics();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'channels' }, async () => {
+          await loadChannelsAndTopics();
+          if (!document.getElementById('admin-panel').classList.contains('hidden')) await loadAdminData();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'direct_messages' }, async (payload) => {
+          const msg = payload.new || payload.old;
+          if (!msg || !session) return;
+          const involvesMe = msg.sender_id === session.user.id || msg.recipient_id === session.user.id;
+          if (involvesMe && activeSection === 'dm') {
+            if (selectedDmUser && (msg.sender_id === selectedDmUser.id || msg.recipient_id === selectedDmUser.id)) {
+              await loadDmConversation();
+            }
+          }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async (payload) => {
+          if (session && payload.new?.id === session.user.id) {
+            await refreshUser(true);
+          }
+          if (activeSection === 'dm') await loadDmMembers();
+          if (!document.getElementById('admin-panel').classList.contains('hidden')) await loadAdminData();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'roles' }, async () => {
+          await loadRoles();
+          await refreshUser(true);
+          if (!document.getElementById('admin-panel').classList.contains('hidden')) await loadAdminData();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'banned_words' }, async () => {
+          if (!document.getElementById('admin-panel').classList.contains('hidden')) await loadAdminData();
+        })
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, async () => {
+          if (!document.getElementById('admin-panel').classList.contains('hidden')) await loadAdminData();
+        })
+        .subscribe((status) => {
+          const pill = document.getElementById('live-status');
+          if (status === 'SUBSCRIBED') {
+            pill.innerHTML = '<span class="live-dot"></span>En direct';
+          }
+        });
+    }
+
+    async function refreshUser(keepActiveSection = false) {
       const { data } = await supabase.auth.getSession();
       session = data.session;
 
       const guestScreen = document.getElementById('guest-screen');
       const appScreen = document.getElementById('app-screen');
       const pendingNotice = document.getElementById('pending-notice');
-      const forumContent = document.getElementById('forum-content');
-      const dmPanel = document.getElementById('dm-panel');
-      const profilePanel = document.getElementById('profile-panel');
       const adminBtn = document.getElementById('btn-toggle-admin');
       const adminPanel = document.getElementById('admin-panel');
 
@@ -351,6 +724,7 @@
         applyAccentColor('#38bdf8');
         guestScreen.classList.remove('hidden');
         appScreen.classList.add('hidden');
+        if (realtimeSub) { supabase.removeChannel(realtimeSub); realtimeSub = null; }
         return;
       }
 
@@ -368,21 +742,24 @@
         ? ''
         : `<span class="badge ${profile?.status}">${profile?.status === 'pending' ? 'En attente' : 'Refusé'}</span>`;
 
-      document.getElementById('current-user-label').innerHTML =
-        `${renderAuthorTag(profile)} ${statusBadge}`;
+      document.getElementById('current-user-label').innerHTML = `${renderAuthorTag(profile)} ${statusBadge}`;
 
       if (profile?.status === 'approved') {
         pendingNotice.classList.add('hidden');
         document.getElementById('profile-username-input').value = profile.username || '';
         document.getElementById('profile-bio-input').value = profile.bio || '';
         document.getElementById('profile-color-input').value = profile.profile_color || '#38bdf8';
-        switchSection('forum');
-        await loadTopics();
+
+        if (!keepActiveSection) {
+          switchSection('forum');
+          await loadChannelsAndTopics();
+        }
+        if (!realtimeSub) setupRealtime();
       } else {
         pendingNotice.classList.remove('hidden');
-        forumContent.classList.add('hidden');
-        dmPanel.classList.add('hidden');
-        profilePanel.classList.add('hidden');
+        document.getElementById('forum-content').classList.add('hidden');
+        document.getElementById('dm-panel').classList.add('hidden');
+        document.getElementById('profile-panel').classList.add('hidden');
       }
 
       if (hasAnyAdminPerm(perms)) {
@@ -397,6 +774,7 @@
     function configureAdminTabs() {
       const showUsers = !!(perms.can_approve_users || perms.can_manage_roles);
       document.getElementById('nav-tab-users').classList.toggle('hidden', !showUsers);
+      document.getElementById('nav-tab-channels').classList.toggle('hidden', !perms.can_manage_roles);
       document.getElementById('nav-tab-roles').classList.toggle('hidden', !perms.can_manage_roles);
       document.getElementById('nav-tab-words').classList.toggle('hidden', !perms.can_manage_banned_words);
       document.getElementById('nav-tab-logs').classList.toggle('hidden', !perms.can_view_logs);
@@ -460,7 +838,7 @@
         return `
           <div class="dm-msg ${mine ? 'mine' : ''}">
             <div class="meta"><strong>${esc(senderName)}</strong> · ${new Date(m.created_at).toLocaleString('fr-FR')}</div>
-            <div>${esc(m.content)}</div>
+            <div style="margin-top:3px; white-space:pre-wrap;">${esc(m.content)}</div>
           </div>
         `;
       }).join('');
@@ -497,7 +875,7 @@
         tbody.querySelectorAll('.status-btn').forEach(btn => {
           btn.addEventListener('click', async () => {
             const { error } = await supabase.from('profiles').update({ status: btn.dataset.status }).eq('id', btn.dataset.uid);
-            if (error) return notify('Erreur : ' + error.message);
+            if (error) return notify('Erreur : ' + error.message, true);
             notify(`Statut mis à jour (${btn.dataset.status}).`);
             await loadAdminData();
           });
@@ -506,9 +884,29 @@
         tbody.querySelectorAll('.user-role-sel').forEach(sel => {
           sel.addEventListener('change', async () => {
             const { error } = await supabase.from('profiles').update({ role: sel.value }).eq('id', sel.dataset.uid);
-            if (error) return notify('Erreur : ' + error.message);
+            if (error) return notify('Erreur : ' + error.message, true);
             notify(`Rôle mis à jour (${sel.value}).`);
-            await refreshUser();
+            await refreshUser(true);
+            await loadAdminData();
+          });
+        });
+      }
+
+      if (perms.can_manage_roles) {
+        const chBox = document.getElementById('admin-channels-list');
+        chBox.innerHTML = channels.map(c => `
+          <div class="row" style="justify-content:space-between; padding:8px 10px; border:1px solid var(--border); border-radius:8px; margin-bottom:6px;">
+            <div><strong>${esc(c.icon)} ${esc(c.name)}</strong> <span class="meta">— ${esc(c.description)}</span></div>
+            <button class="danger sm del-channel-btn" data-cid="${c.id}">Supprimer</button>
+          </div>
+        `).join('');
+
+        chBox.querySelectorAll('.del-channel-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const { error } = await supabase.from('channels').delete().eq('id', Number(btn.dataset.cid));
+            if (error) return notify('Erreur suppression salon : ' + error.message, true);
+            notify('Salon supprimé.');
+            await loadChannelsAndTopics();
             await loadAdminData();
           });
         });
@@ -551,86 +949,11 @@
       }
     }
 
-    async function loadTopics() {
-      const { data } = await supabase
-        .from('topics')
-        .select('id, title, created_at, author_id, profiles(username, role, bio, profile_color)')
-        .order('created_at', { ascending: false });
-
-      topics = data || [];
-      const listEl = document.getElementById('topics-list');
-      if (topics.length === 0) {
-        listEl.innerHTML = '<div class="meta">Aucun sujet.</div>';
-        return;
-      }
-      if (!selectedTopicId) selectedTopicId = topics[0].id;
-
-      listEl.innerHTML = topics.map(t => `
-        <div class="topic-item ${t.id === selectedTopicId ? 'active' : ''}" data-tid="${t.id}">
-          <div><strong>${esc(t.title)}</strong></div>
-          <div class="meta">par ${renderAuthorTag(t.profiles)}</div>
-        </div>
-      `).join('');
-
-      listEl.querySelectorAll('.topic-item').forEach(el => {
-        el.addEventListener('click', async () => {
-          selectedTopicId = Number(el.dataset.tid);
-          await loadTopics();
-        });
-      });
-
-      const currentTopic = topics.find(t => t.id === selectedTopicId);
-      document.getElementById('selected-topic-title').textContent = currentTopic ? currentTopic.title : 'Sélectionne un sujet';
-      if (selectedTopicId) {
-        document.getElementById('new-post-box').classList.remove('hidden');
-        await loadPosts(selectedTopicId);
-      }
-    }
-
-    async function loadPosts(topicId) {
-      const { data } = await supabase
-        .from('posts')
-        .select('id, content, created_at, author_id, profiles(username, role, bio, profile_color)')
-        .eq('topic_id', topicId)
-        .order('created_at', { ascending: true });
-
-      const postsEl = document.getElementById('posts-list');
-      if (!data || data.length === 0) {
-        postsEl.innerHTML = '<div class="meta">Aucun message dans ce sujet.</div>';
-        return;
-      }
-
-      postsEl.innerHTML = data.map(p => {
-        const canDel = session && (session.user.id === p.author_id || perms.can_moderate);
-        return `
-          <div class="card" style="background:var(--subcard); margin-bottom:10px;">
-            <div class="row" style="justify-content:space-between; margin-bottom:6px;">
-              <div>
-                ${renderAuthorTag(p.profiles)}
-                <span class="meta">· ${new Date(p.created_at).toLocaleString('fr-FR')}</span>
-              </div>
-              ${canDel ? `<button class="danger sm del-post" data-pid="${p.id}">Supprimer</button>` : ''}
-            </div>
-            ${p.profiles?.bio ? `<div class="meta" style="margin-bottom:6px;">${esc(p.profiles.bio)}</div>` : ''}
-            <div>${esc(p.content)}</div>
-          </div>
-        `;
-      }).join('');
-
-      postsEl.querySelectorAll('.del-post').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const { error } = await supabase.from('posts').delete().eq('id', Number(btn.dataset.pid));
-          if (error) return notify('Suppression refusée : ' + error.message);
-          notify('Message supprimé (action enregistrée dans les logs).');
-          await loadPosts(topicId);
-        });
-      });
-    }
-
+    // NAVIGATION & ÉVÉNEMENTS
     document.getElementById('btn-nav-forum').addEventListener('click', async () => {
       if (profile?.status !== 'approved') return;
       switchSection('forum');
-      await loadTopics();
+      await loadChannelsAndTopics();
     });
 
     document.getElementById('btn-nav-dm').addEventListener('click', async () => {
@@ -649,28 +972,33 @@
       const username = document.getElementById('profile-username-input').value.trim();
       const bio = document.getElementById('profile-bio-input').value.trim();
       const profile_color = document.getElementById('profile-color-input').value;
-      if (!username) return notify('Le pseudo ne peut pas être vide.');
+      if (!username) return notify('Le pseudo ne peut pas être vide.', true);
       const { error } = await supabase
         .from('profiles')
         .update({ username, bio, profile_color })
         .eq('id', session.user.id);
-      if (error) return notify('Erreur profil : ' + error.message);
+      if (error) return notify('Erreur profil : ' + error.message, true);
       notify('Profil mis à jour !');
-      await refreshUser();
-      switchSection('profile');
+      await refreshUser(true);
     });
 
-    document.getElementById('btn-send-dm').addEventListener('click', async () => {
-      const content = document.getElementById('dm-input').value.trim();
+    async function sendDmMessage() {
+      const input = document.getElementById('dm-input');
+      const content = input.value.trim();
       if (!content || !selectedDmUser) return;
+      input.value = '';
       const { error } = await supabase.from('direct_messages').insert({
         sender_id: session.user.id,
         recipient_id: selectedDmUser.id,
         content
       });
-      if (error) return notify('Erreur DM : ' + error.message);
-      document.getElementById('dm-input').value = '';
+      if (error) return notify('Erreur DM : ' + error.message, true);
       await loadDmConversation();
+    }
+
+    document.getElementById('btn-send-dm').addEventListener('click', sendDmMessage);
+    document.getElementById('dm-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); sendDmMessage(); }
     });
 
     document.getElementById('btn-toggle-admin').addEventListener('click', async () => {
@@ -689,9 +1017,23 @@
       });
     });
 
+    document.getElementById('btn-add-channel').addEventListener('click', async () => {
+      const icon = document.getElementById('channel-icon-input').value.trim() || '💬';
+      const name = document.getElementById('channel-name-input').value.trim();
+      const description = document.getElementById('channel-desc-input').value.trim();
+      if (!name) return notify('Entre un nom de salon.', true);
+      const { error } = await supabase.from('channels').insert({ icon, name, description });
+      if (error) return notify('Erreur création salon : ' + error.message, true);
+      document.getElementById('channel-name-input').value = '';
+      document.getElementById('channel-desc-input').value = '';
+      notify(`Salon "${name}" créé.`);
+      await loadChannelsAndTopics();
+      await loadAdminData();
+    });
+
     document.getElementById('btn-add-role').addEventListener('click', async () => {
       const name = document.getElementById('role-name').value.trim().toLowerCase();
-      if (!name) return notify('Entre un nom de rôle.');
+      if (!name) return notify('Entre un nom de rôle.', true);
       const payload = {
         name,
         can_moderate: document.getElementById('perm-moderate').checked,
@@ -701,9 +1043,9 @@
         can_view_logs: document.getElementById('perm-logs').checked
       };
       const { error } = await supabase.from('roles').insert(payload);
-      if (error) return notify('Erreur création rôle : ' + error.message);
+      if (error) return notify('Erreur création rôle : ' + error.message, true);
       document.getElementById('role-name').value = '';
-      notify(`Rôle "${name}" créé avec ses permissions.`);
+      notify(`Rôle "${name}" créé.`);
       await loadRoles();
       await loadAdminData();
     });
@@ -712,7 +1054,7 @@
       const word = document.getElementById('banned-word-input').value.trim().toLowerCase();
       if (!word) return;
       const { error } = await supabase.from('banned_words').insert({ word, added_by: session.user.id });
-      if (error) return notify('Erreur mot banni : ' + error.message);
+      if (error) return notify('Erreur mot banni : ' + error.message, true);
       document.getElementById('banned-word-input').value = '';
       notify(`Mot banni "${word}" ajouté.`);
       await loadAdminData();
@@ -724,9 +1066,9 @@
       const username = document.getElementById('auth-username').value.trim();
       const email = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-password').value;
-      if (!username || !email || !password) return notify('Remplis tous les champs.');
+      if (!username || !email || !password) return notify('Remplis tous les champs.', true);
       const { error } = await supabase.auth.signUp({ email, password, options: { data: { username } } });
-      if (error) return notify('Erreur : ' + error.message);
+      if (error) return notify('Erreur : ' + error.message, true);
       notify('Compte créé ! Connecte-toi ou attends la validation d’un administrateur.');
       await refreshUser();
     });
@@ -735,7 +1077,7 @@
       const email = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-password').value;
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return notify('Erreur : ' + error.message);
+      if (error) return notify('Erreur : ' + error.message, true);
       notify('');
       await refreshUser();
     });
@@ -746,25 +1088,59 @@
       await refreshUser();
     });
 
-    document.getElementById('btn-create-topic').addEventListener('click', async () => {
-      const title = document.getElementById('topic-title-input').value.trim();
-      if (!title) return;
-      const { data, error } = await supabase.from('topics').insert({ title, author_id: session.user.id }).select().single();
-      if (error) return notify(error.message);
-      document.getElementById('topic-title-input').value = '';
+    async function createTopic() {
+      const input = document.getElementById('topic-title-input');
+      const title = input.value.trim();
+      if (!title || !selectedChannelId) return;
+      const btn = document.getElementById('btn-create-topic');
+      btn.disabled = true;
+      const { data, error } = await supabase
+        .from('topics')
+        .insert({ title, author_id: session.user.id, channel_id: selectedChannelId })
+        .select()
+        .single();
+      btn.disabled = false;
+      if (error) return notify(error.message, true);
+      input.value = '';
       selectedTopicId = data.id;
       notify('Sujet créé.');
-      await loadTopics();
+      await loadChannelsAndTopics();
+    }
+
+    document.getElementById('btn-create-topic').addEventListener('click', createTopic);
+    document.getElementById('topic-title-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); createTopic(); }
     });
 
-    document.getElementById('btn-create-post').addEventListener('click', async () => {
-      const content = document.getElementById('post-content-input').value.trim();
+    document.getElementById('btn-delete-topic').addEventListener('click', async () => {
+      if (!selectedTopicId) return;
+      const { error } = await supabase.from('topics').delete().eq('id', selectedTopicId);
+      if (error) return notify('Suppression refusée : ' + error.message, true);
+      selectedTopicId = null;
+      notify('Sujet supprimé.');
+      await loadChannelsAndTopics();
+    });
+
+    async function createPost() {
+      const input = document.getElementById('post-content-input');
+      const content = input.value.trim();
       if (!content || !selectedTopicId) return;
-      const { error } = await supabase.from('posts').insert({ topic_id: selectedTopicId, author_id: session.user.id, content });
-      if (error) return notify(error.message);
-      document.getElementById('post-content-input').value = '';
-      notify('Message publié.');
+      const btn = document.getElementById('btn-create-post');
+      btn.disabled = true;
+      const { error } = await supabase.from('posts').insert({
+        topic_id: selectedTopicId,
+        author_id: session.user.id,
+        content
+      });
+      btn.disabled = false;
+      if (error) return notify(error.message, true);
+      input.value = '';
       await loadPosts(selectedTopicId);
+    }
+
+    document.getElementById('btn-create-post').addEventListener('click', createPost);
+    document.getElementById('post-content-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); createPost(); }
     });
 
     await loadRoles();
