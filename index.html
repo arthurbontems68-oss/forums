@@ -515,7 +515,7 @@
   <!-- ÉCRAN DE CONNEXION OBLIGATOIRE -->
   <div id="guest-screen" class="auth-wrap">
     <form id="auth-form" class="auth-card" novalidate>
-      <h1>Connexion au forum <span class="tag">v13</span></h1>
+      <h1>Connexion au forum <span class="tag">v15</span></h1>
       <div class="muted">Identifie-toi ou crée un compte pour accéder au salon # général.</div>
       <div id="guest-notice" class="notice" style="margin-top:8px; min-height:22px; white-space:normal; overflow:visible;"></div>
 
@@ -1143,22 +1143,24 @@
         created_at: new Date().toISOString()
       });
       if (me?.status === 'approved' && !me?.is_banned) {
-        await loadChat();
+        await loadChat(true);
       }
     }
 
-    async function loadChat() {
-      const { data } = await supabase
+    async function loadChat(forceScroll = false) {
+      const { data, error } = await supabase
         .from('chat_messages')
         .select('id, content, created_at, author_id, profiles(id, username, role, avatar_url, profile_color, is_banned)')
         .order('created_at', { ascending: true })
         .limit(150);
 
-      const feed = document.getElementById('chat-feed');
-      if (!data || data.length === 0) {
-        feed.innerHTML = '<div class="muted">Aucun message pour l’instant dans # général.</div>';
+      if (error) {
+        setNotice('Erreur synchro salon : ' + error.message, true);
         return;
       }
+
+      const feed = document.getElementById('chat-feed');
+      if (!feed) return;
 
       const merged = [...(data || [])];
       if (window.__localAnnouncements && window.__localAnnouncements.length > 0) {
@@ -1166,6 +1168,19 @@
         for (const loc of window.__localAnnouncements) {
           if (!existingBodies.has(loc.content)) merged.push(loc);
         }
+      }
+
+      const nextSig = merged.map(m => `${m.id}:${m.content}:${m.profiles?.username || ''}:${m.profiles?.profile_color || ''}`).join('||');
+      const isNearBottom = (feed.scrollHeight - feed.scrollTop - feed.clientHeight) < 80;
+
+      if (feed.dataset.lastChatSig === nextSig && !forceScroll) {
+        return;
+      }
+      feed.dataset.lastChatSig = nextSig;
+
+      if (merged.length === 0) {
+        feed.innerHTML = '<div class="muted">Aucun message pour l’instant dans # général.</div>';
+        return;
       }
 
       feed.innerHTML = merged.map(msg => {
@@ -1180,7 +1195,7 @@
             </div>
           `;
         }
-        const p = msg.profiles;
+        const p = msg.profiles || members.find(m => m.id === msg.author_id) || null;
         const col = /^#[0-9a-fA-F]{6}$/.test(p?.profile_color || '') ? p.profile_color : '#eceff4';
         const canDel = session && (session.user.id === msg.author_id || perms.can_moderate);
         return `
@@ -1199,7 +1214,10 @@
         `;
       }).join('');
 
-      feed.scrollTop = feed.scrollHeight;
+      if (forceScroll || isNearBottom || !feed.dataset.hadInitialScroll) {
+        feed.scrollTop = feed.scrollHeight;
+        feed.dataset.hadInitialScroll = '1';
+      }
 
       feed.querySelectorAll('[data-mid]').forEach(el => {
         el.addEventListener('click', () => openMemberModal(el.dataset.mid));
@@ -1208,10 +1226,10 @@
         btn.addEventListener('click', async () => {
           const targetMsg = (data || []).find(x => Number(x.id) === Number(btn.dataset.id));
           const authorName = targetMsg?.profiles?.username || 'un membre';
-          const { error } = await supabase.from('chat_messages').delete().eq('id', Number(btn.dataset.id));
-          if (error) return setNotice(error.message, true);
+          const { error: delErr } = await supabase.from('chat_messages').delete().eq('id', Number(btn.dataset.id));
+          if (delErr) return setNotice(delErr.message, true);
           await postSystemAnnouncement(`Un message de ${authorName} a été supprimé par ${me?.username || 'un administrateur'}.`);
-          await loadChat();
+          await loadChat(true);
         });
       });
     }
@@ -1267,7 +1285,7 @@
             updateNotifBadges();
           }
           renderDmList();
-          await loadDmThread();
+          await loadDmThread(true);
         });
       });
     }
@@ -1338,7 +1356,7 @@
           .limit(50);
         window.__seenDmIds = new Set((existingDms || []).map(x => x.id));
       }
-            await loadDmThread();
+            await loadDmThread(true);
           });
 
           document.getElementById('btn-reject-dm-req').addEventListener('click', async () => {
@@ -1353,7 +1371,7 @@
             }
             setNotice('Demande de DM refusée.');
             await loadDmRequests();
-            await loadDmThread();
+            await loadDmThread(true);
           });
         } else {
           banner.classList.remove('hidden');
@@ -1378,7 +1396,7 @@
               .eq('id', rel.id);
             if (error) return setNotice(error.message, true);
             await loadDmRequests();
-            await loadDmThread();
+            await loadDmThread(true);
           });
         } else {
           banner.innerHTML = `<span><strong>${esc(selectedDmPeer.username)}</strong> a refusé ta demande de message privé.</span>`;
@@ -1430,11 +1448,11 @@
 
       setNotice('Demande de DM envoyée.');
       await loadDmRequests();
-      await loadDmThread();
+      await loadDmThread(true);
       return newReq;
     }
 
-    async function loadDmThread() {
+    async function loadDmThread(forceScroll = false) {
       if (!selectedDmPeer || !session) return;
       delete unreadByPeer[selectedDmPeer.id];
       updateNotifBadges();
@@ -1444,15 +1462,20 @@
         `Message privé — ${esc(selectedDmPeer.username)} <span class="muted" style="margin-left:6px; color:${peerOnline ? '#7ee787' : '#9aa2b1'};">${peerOnline ? '● En ligne' : '○ Hors ligne'}</span>`;
       renderDmRequestBanner();
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('direct_messages')
         .select('id, sender_id, recipient_id, content, created_at')
         .or(`and(sender_id.eq.${session.user.id},recipient_id.eq.${selectedDmPeer.id}),and(sender_id.eq.${selectedDmPeer.id},recipient_id.eq.${session.user.id})`)
         .order('created_at', { ascending: true });
 
+      if (error) {
+        setNotice('Erreur synchro DM : ' + error.message, true);
+        return;
+      }
+
       const thread = document.getElementById('dm-thread');
-      const sig = (data || []).map(x => `${x.id}:${x.content}`).join('|');
-      if (thread.dataset.lastSig === sig) return;
+      const sig = `${selectedDmPeer.id}::` + (data || []).map(x => `${x.id}:${x.content}`).join('|');
+      if (thread.dataset.lastSig === sig && !forceScroll) return;
       thread.dataset.lastSig = sig;
       thread.innerHTML = (data || []).map(m => {
         const mine = m.sender_id === session.user.id;
@@ -1698,13 +1721,72 @@
         });
     }
 
+    async function syncAllMessagesNow(forceScroll = false) {
+      if (!session || !me || me.status !== 'approved' || me.is_banned) return;
+      if (window.__isSyncingMessages) return;
+      window.__isSyncingMessages = true;
+      try {
+        if (currentView === 'chat') {
+          await loadChat(forceScroll);
+        }
+
+        const prevIds = new Set(dmRequests.map(r => `${r.id}:${r.status}`));
+        const { data: reqs } = await supabase
+          .from('dm_requests')
+          .select('*')
+          .or(`requester_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`);
+        if (reqs) {
+          const changed = reqs.some(r => !prevIds.has(`${r.id}:${r.status}`)) || reqs.length !== dmRequests.length;
+          if (changed) {
+            dmRequests = reqs;
+            updateNotifBadges();
+            renderDmList();
+            if (currentView === 'dm' && selectedDmPeer) renderDmRequestBanner();
+          }
+        }
+
+        const { data: incomingDms } = await supabase
+          .from('direct_messages')
+          .select('id, sender_id, recipient_id, content, created_at')
+          .eq('recipient_id', session.user.id)
+          .order('created_at', { ascending: false })
+          .limit(30);
+
+        if (incomingDms && incomingDms.length > 0) {
+          if (!window.__seenDmIds) {
+            window.__seenDmIds = new Set(incomingDms.map(m => m.id));
+          } else {
+            for (const m of [...incomingDms].reverse()) {
+              if (!window.__seenDmIds.has(m.id)) {
+                window.__seenDmIds.add(m.id);
+                const isViewingThisThread = currentView === 'dm' && selectedDmPeer?.id === m.sender_id && !document.hidden;
+                const sender = members.find(x => x.id === m.sender_id);
+                if (!isViewingThisThread) {
+                  unreadByPeer[m.sender_id] = (unreadByPeer[m.sender_id] || 0) + 1;
+                  updateNotifBadges();
+                  renderDmList();
+                }
+                showDmToast(sender?.username || 'Message privé', m.content, m.sender_id);
+              }
+            }
+          }
+        }
+
+        if (currentView === 'dm' && selectedDmPeer) {
+          await loadDmThread(forceScroll);
+        }
+      } finally {
+        window.__isSyncingMessages = false;
+      }
+    }
+
     function subscribeRealtime() {
       if (realtimeChannel) supabase.removeChannel(realtimeChannel);
       if (window.__pollInterval) clearInterval(window.__pollInterval);
       realtimeChannel = supabase
-        .channel('discord-sync-' + Date.now())
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, () => {
-          if (me?.status === 'approved' && !me?.is_banned) loadChat();
+        .channel('forum-messages-v15-' + Date.now())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, async () => {
+          if (me?.status === 'approved' && !me?.is_banned) await loadChat(true);
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async (payload) => {
           const prev = members.find(x => x.id === payload.new?.id);
@@ -1737,7 +1819,7 @@
             const peer = members.find(m => m.id === req.recipient_id);
             setNotice(`${peer?.username || 'Le membre'} a accepté ta demande de DM.`);
             if (currentView === 'dm' && selectedDmPeer?.id === req.recipient_id) {
-              await loadDmThread();
+              await loadDmThread(true);
             }
           }
         })
@@ -1750,21 +1832,21 @@
 
           if (payload.eventType === 'INSERT' && m.recipient_id === session.user.id) {
             if (!window.__seenDmIds) window.__seenDmIds = new Set();
-            if (window.__seenDmIds.has(m.id)) return;
-            window.__seenDmIds.add(m.id);
-            const isViewingThisThread = currentView === 'dm' && selectedDmPeer?.id === m.sender_id && !document.hidden;
-            const sender = members.find(x => x.id === m.sender_id);
-            if (!isViewingThisThread) {
-              unreadByPeer[m.sender_id] = (unreadByPeer[m.sender_id] || 0) + 1;
-              updateNotifBadges();
-              renderDmList();
-              await loadMembers();
+            if (!window.__seenDmIds.has(m.id)) {
+              window.__seenDmIds.add(m.id);
+              const isViewingThisThread = currentView === 'dm' && selectedDmPeer?.id === m.sender_id && !document.hidden;
+              const sender = members.find(x => x.id === m.sender_id);
+              if (!isViewingThisThread) {
+                unreadByPeer[m.sender_id] = (unreadByPeer[m.sender_id] || 0) + 1;
+                updateNotifBadges();
+                renderDmList();
+              }
+              showDmToast(sender?.username || 'Message privé', m.content, m.sender_id);
             }
-            showDmToast(sender?.username || 'Message privé', m.content, m.sender_id);
           }
 
           if (currentView === 'dm' && selectedDmPeer?.id === peerId) {
-            await loadDmThread();
+            await loadDmThread(true);
           }
         })
         .subscribe((status) => {
@@ -1773,55 +1855,10 @@
           }
         });
 
-      // Secours léger toutes les 3s pour les DM et demandes si l'événement Realtime n'arrive pas
-      window.__pollInterval = setInterval(async () => {
-        if (!session || !me || me.status !== 'approved' || me.is_banned) return;
-        const prevIds = new Set(dmRequests.map(r => `${r.id}:${r.status}`));
-        const { data: reqs } = await supabase
-          .from('dm_requests')
-          .select('*')
-          .or(`requester_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`);
-        if (reqs) {
-          const changed = reqs.some(r => !prevIds.has(`${r.id}:${r.status}`)) || reqs.length !== dmRequests.length;
-          if (changed) {
-            dmRequests = reqs;
-            updateNotifBadges();
-            renderDmList();
-            if (currentView === 'dm' && selectedDmPeer) renderDmRequestBanner();
-          }
-        }
-        const { data: incomingDms } = await supabase
-          .from('direct_messages')
-          .select('id, sender_id, recipient_id, content, created_at')
-          .eq('recipient_id', session.user.id)
-          .order('created_at', { ascending: false })
-          .limit(30);
-
-        if (incomingDms && incomingDms.length > 0) {
-          if (!window.__seenDmIds) {
-            window.__seenDmIds = new Set(incomingDms.map(m => m.id));
-          } else {
-            for (const m of [...incomingDms].reverse()) {
-              if (!window.__seenDmIds.has(m.id)) {
-                window.__seenDmIds.add(m.id);
-                const isViewingThisThread = currentView === 'dm' && selectedDmPeer?.id === m.sender_id && !document.hidden;
-                const sender = members.find(x => x.id === m.sender_id);
-                if (!isViewingThisThread) {
-                  unreadByPeer[m.sender_id] = (unreadByPeer[m.sender_id] || 0) + 1;
-                  updateNotifBadges();
-                  renderDmList();
-                  await loadMembers();
-                }
-                showDmToast(sender?.username || 'Message privé', m.content, m.sender_id);
-              }
-            }
-          }
-        }
-
-        if (currentView === 'dm' && selectedDmPeer) {
-          await loadDmThread();
-        }
-      }, 3000);
+      // Synchronisation rapide et continue pour salon général, DM, demandes et membres
+      window.__pollInterval = setInterval(() => {
+        syncAllMessagesNow(false).catch(() => {});
+      }, 1200);
     }
 
     function cleanupSyncChannels() {
@@ -1857,7 +1894,14 @@
       document.getElementById('app-screen').classList.remove('hidden');
 
       if (!roles || roles.length === 0) {
-        await loadRoles();
+        document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) syncAllMessagesNow(true).catch(() => {});
+    });
+    window.addEventListener('focus', () => {
+      syncAllMessagesNow(true).catch(() => {});
+    });
+
+    await loadRoles();
       }
 
       const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
@@ -1891,11 +1935,11 @@
       await loadDmRequests();
       if (!keepView) {
         showView('chat');
-        await loadChat();
+        await loadChat(true);
       } else if (currentView === 'chat') {
-        await loadChat();
+        await loadChat(true);
       } else if (currentView === 'dm' && selectedDmPeer) {
-        await loadDmThread();
+        await loadDmThread(true);
       } else if (currentView === 'admin') {
         await loadAdmin();
       }
@@ -1934,7 +1978,7 @@
       showView('dm');
       await loadDmRequests();
       renderDmList();
-      await loadDmThread();
+      await loadDmThread(true);
     });
 
     let isSigningUp = false;
@@ -2071,7 +2115,7 @@
     document.getElementById('btn-nav-chat').addEventListener('click', async () => {
       if (me?.status !== 'approved' || me?.is_banned) return;
       showView('chat');
-      await loadChat();
+      await loadChat(true);
     });
 
     document.getElementById('btn-nav-dm').addEventListener('click', async () => {
@@ -2079,7 +2123,7 @@
       showView('dm');
       await loadDmRequests();
       renderDmList();
-      if (selectedDmPeer) await loadDmThread();
+      if (selectedDmPeer) await loadDmThread(true);
     });
 
     document.getElementById('btn-nav-profile').addEventListener('click', () => {
@@ -2108,7 +2152,7 @@
       inp.value = '';
       const { error } = await supabase.from('chat_messages').insert({ author_id: session.user.id, content });
       if (error) return setNotice(error.message, true);
-      await loadChat();
+      await loadChat(true);
     }
 
     document.getElementById('btn-send-chat').addEventListener('click', sendChatMessage);
@@ -2145,7 +2189,7 @@
       setNotice('Profil enregistré.');
       await refreshSession(true);
       await loadMembers();
-      await loadChat();
+      await loadChat(true);
     });
 
     async function sendDm() {
@@ -2174,7 +2218,7 @@
         content
       });
       if (error) return setNotice(error.message, true);
-      await loadDmThread();
+      await loadDmThread(true);
     }
 
     document.getElementById('btn-send-dm').addEventListener('click', sendDm);
@@ -2200,7 +2244,7 @@
       showView('dm');
       await loadDmRequests();
       renderDmList();
-      await loadDmThread();
+      await loadDmThread(true);
     });
     document.getElementById('modal-ban-btn').addEventListener('click', async () => {
       if (!inspectedMember) return;
