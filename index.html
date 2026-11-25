@@ -3,427 +3,518 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mon Forum — Espace Communautaire</title>
+  <title>Forum — # général</title>
   <style>
     :root {
-      --bg: #090d16;
-      --bg-elevated: #111827;
-      --card: #161f33;
-      --subcard: #0d1322;
-      --hover: #1e293b;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
-      --accent: #38bdf8;
-      --accent-soft: rgba(56, 189, 248, 0.14);
-      --ok: #22c55e;
-      --warn: #f59e0b;
-      --danger: #ef4444;
-      --border: rgba(148, 163, 184, 0.16);
-      --shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+      --bg: #111318;
+      --sidebar: #171a21;
+      --panel: #1e222b;
+      --panel-2: #252a36;
+      --text: #eceff4;
+      --muted: #9aa2b1;
+      --accent: #5865f2;
+      --accent-hover: #4752c4;
+      --ok: #2da44e;
+      --warn: #d29922;
+      --danger: #da3633;
+      --border: #2c313c;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: radial-gradient(circle at top right, #131c31 0%, var(--bg) 55%);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
       color: var(--text);
-      line-height: 1.5;
-      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.45;
     }
 
-    /* SCROLLBARS */
-    ::-webkit-scrollbar { width: 7px; height: 7px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 99px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.45); }
-
-    /* AUTH SCREEN */
-    .auth-screen {
+    /* AUTH */
+    .auth-wrap {
       min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 390px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+    }
+    .auth-card h1 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+    .auth-card input, .auth-card button { width: 100%; margin-top: 10px; }
+
+    /* APP SHELL */
+    .app-shell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    .topbar {
+      height: 48px;
+      background: var(--sidebar);
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 20px;
+      justify-content: space-between;
+      padding: 0 14px;
+      gap: 10px;
+      flex-shrink: 0;
     }
-    .auth-box {
-      width: 100%;
-      max-width: 430px;
-      background: rgba(22, 31, 51, 0.9);
-      backdrop-filter: blur(14px);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 30px;
-      box-shadow: var(--shadow);
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+    .topbar-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; color: #7ee787;
+      background: rgba(45, 164, 78, 0.14);
+      border: 1px solid rgba(45, 164, 78, 0.35);
+      padding: 2px 7px; border-radius: 4px;
     }
-    .auth-box h1 { margin: 0 0 6px; font-size: 1.65rem; letter-spacing: -0.02em; }
-    .auth-box input, .auth-box button { width: 100%; margin-bottom: 12px; }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #3fb950; }
 
-    /* LAYOUT & HEADER */
-    .container { max-width: 1360px; margin: 0 auto; padding: 18px 20px; }
-    header {
-      display: flex; flex-wrap: wrap; justify-content: space-between;
-      align-items: center; gap: 14px;
-      background: rgba(22, 31, 51, 0.78);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px 20px;
-      margin-bottom: 18px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .brand-logo {
-      width: 38px; height: 38px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--accent), #6366f1);
-      display: grid; place-items: center; font-weight: 800; color: #090d16; font-size: 1.1rem;
-    }
-    .live-pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 0.75rem; font-weight: 600; color: var(--ok);
-      background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.3);
-      padding: 3px 9px; border-radius: 999px;
-    }
-    .live-dot {
-      width: 7px; height: 7px; border-radius: 50%; background: var(--ok);
-      box-shadow: 0 0 8px var(--ok); animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-
-    /* CARDS & CONTROLS */
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 18px;
-      margin-bottom: 16px;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22);
-    }
-    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-    input, textarea, select {
-      font: inherit; font-size: 0.92rem;
-      border-radius: 10px; border: 1px solid var(--border);
-      padding: 9px 13px; background: var(--subcard); color: var(--text);
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-    input:focus, textarea:focus, select:focus {
-      outline: none; border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-soft);
-    }
-    button {
-      font: inherit; font-size: 0.9rem; font-weight: 600;
-      border-radius: 10px; padding: 9px 14px;
-      background: var(--accent); color: #061322;
-      border: none; cursor: pointer;
-      transition: transform 0.1s, opacity 0.15s, background 0.15s;
-    }
-    button:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    button.secondary { background: rgba(148, 163, 184, 0.14); color: var(--text); border: 1px solid var(--border); }
-    button.secondary.nav-active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
-    button.ok { background: var(--ok); color: #042310; }
-    button.danger { background: rgba(239, 68, 68, 0.16); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.35); }
-    button.danger:hover { background: var(--danger); color: #fff; }
-    button.sm { padding: 5px 10px; font-size: 0.8rem; border-radius: 8px; }
-
-    .badge {
-      display: inline-flex; align-items: center; gap: 4px;
-      background: var(--subcard); border: 1px solid var(--accent);
-      color: var(--accent); font-size: 0.72rem; font-weight: 600;
-      padding: 2px 8px; border-radius: 999px; margin-left: 6px;
-    }
-    .badge.pending { border-color: var(--warn); color: var(--warn); }
-    .badge.rejected { border-color: var(--danger); color: var(--danger); }
-    .meta { color: var(--muted); font-size: 0.83rem; }
-    .hidden { display: none !important; }
-
-    /* 3-COLUMN FORUM WORKSPACE */
-    .workspace-forum {
+    .main-body {
+      flex: 1;
       display: grid;
-      grid-template-columns: 240px 300px 1fr;
-      gap: 16px;
-      align-items: start;
+      grid-template-columns: 220px 1fr 230px;
+      min-height: 0;
     }
-    .grid-dm { display: grid; grid-template-columns: 280px 1fr; gap: 18px; }
-    @media (max-width: 1050px) {
-      .workspace-forum { grid-template-columns: 220px 1fr; }
-      .workspace-forum > main { grid-column: 1 / -1; }
-    }
-    @media (max-width: 720px) {
-      .workspace-forum, .grid-dm { grid-template-columns: 1fr; }
+    @media (max-width: 900px) {
+      .main-body { grid-template-columns: 1fr; overflow-y: auto; }
+      .left-col, .right-col { display: none; }
+      .app-shell { height: auto; min-height: 100vh; overflow: visible; }
     }
 
-    .channel-item, .topic-item, .user-item {
-      padding: 10px 12px; border-radius: 10px; cursor: pointer;
-      border: 1px solid transparent; margin-bottom: 6px;
-      transition: background 0.15s, border-color 0.15s;
+    /* LEFT SIDEBAR */
+    .left-col {
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
-    .channel-item:hover, .topic-item:hover, .user-item:hover { background: var(--hover); }
-    .channel-item.active, .topic-item.active, .user-item.active {
-      background: var(--accent-soft); border-color: var(--accent);
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      padding: 0 8px 6px;
     }
-    .channel-header {
-      display: flex; justify-content: space-between; align-items: center;
-      font-weight: 600; font-size: 0.94rem;
+    .channel-active-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 5px;
+      background: var(--panel-2); color: var(--text); font-weight: 500;
     }
-    .count-pill {
-      font-size: 0.72rem; background: var(--subcard); color: var(--muted);
-      padding: 1px 7px; border-radius: 99px; border: 1px solid var(--border);
+    .me-mini {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer;
     }
 
-    .avatar-dot {
-      display: inline-block; width: 10px; height: 10px; border-radius: 50%;
-      margin-right: 6px; vertical-align: middle;
+    /* CENTER STAGE */
+    .center-col {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: var(--bg);
     }
-    .post-card {
-      background: var(--subcard);
+    .view-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .chat-feed {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .chat-line {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 7px 10px;
+      border-radius: 5px;
+    }
+    .chat-line:hover { background: rgba(255, 255, 255, 0.025); }
+    .chat-line:hover .msg-actions { opacity: 1; }
+    .msg-actions { opacity: 0; transition: opacity 0.12s; margin-left: auto; }
+    .chat-input-bar {
+      padding: 12px 16px 16px;
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+    .chat-input-box {
+      display: flex; gap: 8px;
+      background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin-bottom: 10px;
-      transition: border-color 0.15s;
+      border-radius: 6px;
+      padding: 6px 8px;
     }
-    .post-card:hover { border-color: rgba(148, 163, 184, 0.35); }
-    .post-body { margin-top: 8px; white-space: pre-wrap; word-break: break-word; font-size: 0.95rem; }
+    .chat-input-box input {
+      flex: 1; background: transparent; border: none; padding: 6px 8px;
+    }
+    .chat-input-box input:focus { outline: none; }
 
-    .dm-msg {
-      padding: 10px 14px; border-radius: 12px; margin-bottom: 8px;
-      background: var(--subcard); border: 1px solid var(--border);
-      max-width: 82%;
+    /* RIGHT MEMBERS LIST */
+    .right-col {
+      background: var(--sidebar);
+      border-left: 1px solid var(--border);
+      padding: 12px 8px;
+      overflow-y: auto;
     }
-    .dm-msg.mine {
-      margin-left: auto;
-      background: var(--accent-soft);
-      border-color: rgba(56, 189, 248, 0.4);
+    .member-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 8px; border-radius: 5px; cursor: pointer;
+    }
+    .member-row:hover { background: var(--panel-2); }
+
+    /* AVATAR & BANNER */
+    .avatar-img {
+      width: 34px; height: 34px; border-radius: 50%;
+      object-fit: cover; background: var(--panel-2);
+      border: 1px solid var(--border); flex-shrink: 0;
+    }
+    .avatar-sm { width: 28px; height: 28px; }
+    .avatar-lg { width: 72px; height: 72px; border: 3px solid var(--panel); }
+    .profile-banner {
+      height: 110px;
+      border-radius: 6px 6px 0 0;
+      background-color: var(--panel-2);
+      background-size: cover;
+      background-position: center;
+      border: 1px solid var(--border);
+      border-bottom: none;
     }
 
-    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-    .tab-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
-    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
-    th { color: var(--muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
-    .banner {
-      color: var(--accent); margin-bottom: 12px; min-height: 22px;
-      font-weight: 500; font-size: 0.9rem;
+    /* CARDS, INPUTS, BUTTONS */
+    .box {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 14px;
     }
+    input, textarea, select {
+      font: inherit; font-size: 13px;
+      background: var(--sidebar); color: var(--text);
+      border: 1px solid var(--border); border-radius: 5px;
+      padding: 7px 10px;
+    }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+    button {
+      font: inherit; font-size: 13px; font-weight: 500;
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 5px; padding: 7px 12px; cursor: pointer;
+    }
+    button:hover:not(:disabled) { background: var(--accent-hover); }
+    button.ghost { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+    button.ghost:hover:not(:disabled) { background: #2f3646; }
+    button.ghost.active { background: rgba(88, 101, 242, 0.2); border-color: var(--accent); color: #fff; }
+    button.ok { background: var(--ok); color: #fff; }
+    button.danger { background: var(--danger); color: #fff; }
+    button.sm { padding: 4px 8px; font-size: 12px; }
+
+    .tag {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 1px 6px; border-radius: 4px;
+      background: var(--panel-2); color: var(--muted); border: 1px solid var(--border);
+      margin-left: 5px;
+    }
+    .tag.pending { color: #e3b341; border-color: rgba(210, 153, 34, 0.4); }
+    .tag.rejected, .tag.banned { color: #f85149; border-color: rgba(218, 54, 51, 0.45); }
+    .muted { color: var(--muted); font-size: 12px; }
+    .hidden { display: none !important; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+    /* MODAL FICHE MEMBRE */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65);
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px; z-index: 50;
+    }
+    .modal-card {
+      width: 100%; max-width: 440px;
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden;
+    }
+
+    /* DM GRID */
+    .dm-layout { display: grid; grid-template-columns: 220px 1fr; gap: 14px; min-height: 420px; }
+    @media (max-width: 720px) { .dm-layout { grid-template-columns: 1fr; } }
+    .dm-bubble {
+      padding: 8px 11px; border-radius: 6px; margin-bottom: 6px;
+      background: var(--sidebar); border: 1px solid var(--border); max-width: 82%;
+    }
+    .dm-bubble.mine { margin-left: auto; background: rgba(88, 101, 242, 0.18); border-color: rgba(88, 101, 242, 0.45); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+    .notice { color: #79c0ff; font-size: 12px; min-height: 18px; }
+    .notice.err { color: #f85149; }
   </style>
 </head>
 <body>
 
   <!-- ÉCRAN DE CONNEXION OBLIGATOIRE -->
-  <div id="guest-screen" class="auth-screen">
-    <div class="auth-box">
-      <h1>Accès au Forum</h1>
-      <p class="meta" style="margin-top:0; margin-bottom:18px;">
-        Connecte-toi ou crée un compte pour rejoindre les salons de discussion.
-      </p>
-      <div id="guest-banner" class="banner"></div>
+  <div id="guest-screen" class="auth-wrap">
+    <div class="auth-card">
+      <h1>Connexion au forum</h1>
+      <div class="muted">Identifie-toi ou crée un compte pour accéder au salon # général.</div>
+      <div id="guest-notice" class="notice" style="margin-top:8px;"></div>
 
-      <input type="text" id="auth-username" placeholder="Pseudo (uniquement pour l'inscription)" />
+      <input type="text" id="auth-username" placeholder="Pseudo (inscription uniquement)" />
       <input type="email" id="auth-email" placeholder="Adresse e-mail" />
       <input type="password" id="auth-password" placeholder="Mot de passe" />
 
       <button id="btn-login">Se connecter</button>
-      <button id="btn-signup" class="secondary">Créer un compte</button>
+      <button id="btn-signup" class="ghost">Créer un compte</button>
     </div>
   </div>
 
-  <!-- APPLICATION FORUM -->
-  <div id="app-screen" class="container hidden">
-    <header>
-      <div class="brand">
-        <div class="brand-logo">F</div>
-        <div>
-          <div class="row" style="gap:8px;">
-            <h1 style="margin:0; font-size:1.25rem;">Mon Forum</h1>
-            <span class="live-pill" id="live-status"><span class="live-dot"></span>En direct</span>
-          </div>
-          <div class="meta">Salons thématiques, profils personnalisés & messagerie instantanée</div>
-        </div>
+  <!-- APPLICATION -->
+  <div id="app-screen" class="app-shell hidden">
+    <header class="topbar">
+      <div class="topbar-left">
+        <strong># général</strong>
+        <span class="live-badge"><span class="live-dot"></span>En direct</span>
+        <span id="app-notice" class="notice"></span>
       </div>
-
-      <div class="row">
-        <span id="current-user-label"></span>
-        <button id="btn-nav-forum" class="secondary nav-active">Salons</button>
-        <button id="btn-nav-dm" class="secondary">Messages (DM)</button>
-        <button id="btn-nav-profile" class="secondary">Mon Profil</button>
-        <button id="btn-toggle-admin" class="hidden">Panneau Admin</button>
-        <button id="btn-logout" class="secondary">Déconnexion</button>
+      <div class="topbar-right">
+        <button id="btn-nav-chat" class="ghost sm active">Salon général</button>
+        <button id="btn-nav-dm" class="ghost sm">Messages (DM)</button>
+        <button id="btn-nav-profile" class="ghost sm">Mon profil</button>
+        <button id="btn-toggle-admin" class="sm hidden">Administration</button>
+        <button id="btn-logout" class="ghost sm">Déconnexion</button>
       </div>
     </header>
 
-    <div id="status-banner" class="banner"></div>
-
-    <!-- COMPTE EN ATTENTE -->
-    <section id="pending-notice" class="card hidden">
-      <h2 style="margin-top:0;">Compte en attente de validation</h2>
-      <p class="meta" style="margin-bottom:0;">
-        Ton inscription a bien été enregistrée. Un administrateur doit valider ton accès avant que tu puisses accéder aux salons, aux DM et à la personnalisation.
-      </p>
-    </section>
-
-    <!-- PERSONNALISATION DU PROFIL -->
-    <section id="profile-panel" class="card hidden">
-      <h2 style="margin-top:0;">Personnaliser mon profil</h2>
-      <div class="row" style="margin-bottom:14px;">
-        <label class="meta">Pseudo :<br/>
-          <input type="text" id="profile-username-input" placeholder="Ton pseudo" style="margin-top:4px;" />
-        </label>
-        <label class="meta">Couleur du badge & thème :<br/>
-          <input type="color" id="profile-color-input" value="#38bdf8" style="margin-top:4px; height:40px; width:70px; padding:3px;" />
-        </label>
-      </div>
-      <div style="margin-bottom:14px;">
-        <label class="meta" style="display:block; margin-bottom:4px;">Bio :</label>
-        <textarea id="profile-bio-input" rows="3" placeholder="Présente-toi en quelques mots..." style="width:100%;"></textarea>
-      </div>
-      <button id="btn-save-profile">Enregistrer mon profil</button>
-    </section>
-
-    <!-- MESSAGES PRIVÉS (DM) -->
-    <section id="dm-panel" class="card hidden">
-      <h2 style="margin-top:0;">Messages privés en direct (DM)</h2>
-      <div class="grid-dm">
+    <div class="main-body">
+      <!-- COLONNE GAUCHE -->
+      <aside class="left-col">
         <div>
-          <div class="meta" style="margin-bottom:8px;">Membres approuvés</div>
-          <div id="dm-users-list"></div>
+          <div class="section-label">Salon textuel</div>
+          <div class="channel-active-row">
+            <span>#</span>
+            <span>général</span>
+          </div>
+          <div class="muted" style="padding:8px 10px;">Discussions en direct avec les membres approuvés.</div>
         </div>
-        <div>
-          <h3 id="dm-chat-title" style="margin-top:0;">Choisis un membre pour discuter</h3>
-          <div id="dm-messages-box" style="height:360px; overflow-y:auto; padding-right:6px; margin-bottom:12px;"></div>
-          <div id="dm-send-box" class="row hidden">
-            <input type="text" id="dm-input" placeholder="Écris un message privé (Entrée pour envoyer)..." style="flex:1;" />
-            <button id="btn-send-dm">Envoyer</button>
+
+        <div id="me-sidebar-card" class="me-mini">
+          <img id="me-mini-avatar" class="avatar-img avatar-sm" src="" alt="" />
+          <div style="min-width:0; flex:1;">
+            <div id="me-mini-name" style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+            <div id="me-mini-role" class="muted"></div>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- PANNEAU ADMIN -->
-    <section id="admin-panel" class="card hidden">
-      <div class="row" style="justify-content:space-between; margin-bottom:12px;">
-        <h2 style="margin:0;">Panneau d'administration</h2>
-        <span class="meta" id="admin-perms-summary"></span>
-      </div>
-
-      <div class="tabs">
-        <button class="secondary tab-btn active" data-tab="tab-users" id="nav-tab-users">Comptes & Rôles</button>
-        <button class="secondary tab-btn" data-tab="tab-channels" id="nav-tab-channels">Salons</button>
-        <button class="secondary tab-btn" data-tab="tab-roles" id="nav-tab-roles">Créer un rôle</button>
-        <button class="secondary tab-btn" data-tab="tab-words" id="nav-tab-words">Mots bannis</button>
-        <button class="secondary tab-btn" data-tab="tab-logs" id="nav-tab-logs">Logs système</button>
-      </div>
-
-      <div id="tab-users" class="admin-tab">
-        <div style="overflow-x:auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>Pseudo</th>
-                <th>Bio</th>
-                <th>Statut</th>
-                <th>Validation</th>
-                <th>Rôle</th>
-              </tr>
-            </thead>
-            <tbody id="admin-users-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="tab-channels" class="admin-tab hidden">
-        <div class="row" style="margin-bottom:14px;">
-          <input type="text" id="channel-icon-input" placeholder="Icône (ex: 🔥)" style="width:90px;" value="💬" />
-          <input type="text" id="channel-name-input" placeholder="Nom du salon (ex: Musique)" />
-          <input type="text" id="channel-desc-input" placeholder="Description courte..." style="flex:1; min-width:200px;" />
-          <button id="btn-add-channel">Créer le salon</button>
-        </div>
-        <div id="admin-channels-list"></div>
-      </div>
-
-      <div id="tab-roles" class="admin-tab hidden">
-        <div class="row" style="margin-bottom:12px;">
-          <input type="text" id="role-name" placeholder="Nom du rôle (ex: super_modo)" />
-          <label class="meta"><input type="checkbox" id="perm-moderate" /> Modérer messages</label>
-          <label class="meta"><input type="checkbox" id="perm-approve" /> Accepter/refuser comptes</label>
-          <label class="meta"><input type="checkbox" id="perm-roles" /> Gérer les rôles & salons</label>
-          <label class="meta"><input type="checkbox" id="perm-words" /> Gérer mots bannis</label>
-          <label class="meta"><input type="checkbox" id="perm-logs" /> Voir les logs</label>
-          <button id="btn-add-role">Ajouter le rôle</button>
-        </div>
-        <div id="roles-overview" class="meta"></div>
-      </div>
-
-      <div id="tab-words" class="admin-tab hidden">
-        <div class="row" style="margin-bottom:12px;">
-          <input type="text" id="banned-word-input" placeholder="Mot ou expression interdite..." />
-          <button id="btn-add-word">Ajouter le mot banni</button>
-        </div>
-        <div id="banned-words-list" class="row"></div>
-      </div>
-
-      <div id="tab-logs" class="admin-tab hidden">
-        <div class="row" style="justify-content:space-between; margin-bottom:8px;">
-          <span class="meta">50 dernières actions enregistrées</span>
-          <button class="secondary sm" id="btn-refresh-logs">Actualiser</button>
-        </div>
-        <div style="overflow-x:auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Action</th>
-                <th>Détails</th>
-              </tr>
-            </thead>
-            <tbody id="admin-logs-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ESPACE PRINCIPAL À 3 COLONNES : SALONS -> SUJETS -> MESSAGES -->
-    <div id="forum-content" class="workspace-forum hidden">
-      <!-- COLONNE 1 : SALONS -->
-      <aside class="card" style="padding:14px;">
-        <div class="row" style="justify-content:space-between; margin-bottom:10px;">
-          <h3 style="margin:0; font-size:0.95rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted);">Salons</h3>
-        </div>
-        <div id="channels-list"></div>
       </aside>
 
-      <!-- COLONNE 2 : SUJETS DU SALON ACTIF -->
-      <section class="card" style="padding:14px;">
-        <div style="margin-bottom:12px;">
-          <h3 id="active-channel-heading" style="margin:0 0 2px; font-size:1.05rem;">Sujets</h3>
-          <div id="active-channel-desc" class="meta"></div>
-        </div>
-
-        <div id="new-topic-box" style="margin-bottom:14px;">
-          <input type="text" id="topic-title-input" placeholder="Titre du nouveau sujet..." style="width:100%; margin-bottom:8px;" />
-          <button id="btn-create-topic" style="width:100%;">+ Nouveau sujet</button>
-        </div>
-        <div id="topics-list" style="max-height:540px; overflow-y:auto;"></div>
-      </section>
-
-      <!-- COLONNE 3 : FIL DE DISCUSSION -->
-      <main class="card">
-        <div class="row" style="justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:14px;">
-          <div>
-            <h2 id="selected-topic-title" style="margin:0; font-size:1.25rem;">Sélectionne un sujet</h2>
-            <div id="selected-topic-meta" class="meta"></div>
+      <!-- COLONNE CENTRALE -->
+      <main class="center-col">
+        <!-- BLOQUÉ : EN ATTENTE / REFUSÉ / BANNI -->
+        <div id="blocked-panel" class="view-panel hidden">
+          <div class="box">
+            <h2 id="blocked-title" style="margin:0 0 6px; font-size:16px;"></h2>
+            <div id="blocked-desc" class="muted"></div>
           </div>
-          <button id="btn-delete-topic" class="danger sm hidden">Supprimer le sujet</button>
         </div>
 
-        <div id="posts-list" style="max-height:500px; overflow-y:auto; padding-right:4px;"></div>
+        <!-- SALON GÉNÉRAL (TCHAT STYLE DISCORD) -->
+        <div id="chat-panel" class="hidden" style="display:flex; flex-direction:column; flex:1; min-height:0;">
+          <div id="chat-feed" class="chat-feed" style="padding:14px 16px;"></div>
+          <div class="chat-input-bar">
+            <div class="chat-input-box">
+              <input type="text" id="chat-input" placeholder="Envoyer un message dans # général..." />
+              <button id="btn-send-chat">Envoyer</button>
+            </div>
+          </div>
+        </div>
 
-        <div id="new-post-box" class="hidden" style="margin-top:16px; border-top:1px solid var(--border); padding-top:14px;">
-          <textarea id="post-content-input" rows="3" placeholder="Écris ta réponse dans ce salon..." style="width:100%; margin-bottom:8px;"></textarea>
-          <div class="row" style="justify-content:flex-end;">
-            <button id="btn-create-post">Publier la réponse</button>
+        <!-- PROFIL PERSO (PP + BANNIÈRE + BIO + COULEUR) -->
+        <div id="profile-panel" class="view-panel hidden">
+          <div class="box" style="padding:0; overflow:hidden;">
+            <div id="preview-banner" class="profile-banner"></div>
+            <div style="padding:0 16px 16px; margin-top:-36px;">
+              <img id="preview-avatar" class="avatar-img avatar-lg" src="" alt="" />
+              <div style="margin-top:8px;">
+                <strong id="preview-username" style="font-size:16px;"></strong>
+                <span id="preview-role-tag" class="tag"></span>
+              </div>
+              <div id="preview-bio" class="muted" style="margin-top:4px;"></div>
+            </div>
+          </div>
+
+          <div class="box">
+            <h2 style="margin:0 0 12px; font-size:15px;">Modifier mon profil</h2>
+            <div class="row" style="margin-bottom:10px;">
+              <label class="muted">Pseudo<br/>
+                <input type="text" id="prof-username" style="margin-top:4px;" />
+              </label>
+              <label class="muted">Couleur rôle<br/>
+                <input type="color" id="prof-color" value="#5865f2" style="margin-top:4px; height:32px; width:56px; padding:2px;" />
+              </label>
+            </div>
+
+            <div style="margin-bottom:10px;">
+              <label class="muted" style="display:block; margin-bottom:4px;">Photo de profil (URL ou fichier image)</label>
+              <div class="row">
+                <input type="text" id="prof-avatar-url" placeholder="https://... (optionnel)" style="flex:1; min-width:200px;" />
+                <input type="file" id="prof-avatar-file" accept="image/*" />
+              </div>
+            </div>
+
+            <div style="margin-bottom:10px;">
+              <label class="muted" style="display:block; margin-bottom:4px;">Bannière de profil (URL ou fichier image)</label>
+              <div class="row">
+                <input type="text" id="prof-banner-url" placeholder="https://... (optionnel)" style="flex:1; min-width:200px;" />
+                <input type="file" id="prof-banner-file" accept="image/*" />
+              </div>
+            </div>
+
+            <div style="margin-bottom:12px;">
+              <label class="muted" style="display:block; margin-bottom:4px;">Biographie</label>
+              <textarea id="prof-bio" rows="3" placeholder="À propos de toi..." style="width:100%;"></textarea>
+            </div>
+
+            <button id="btn-save-profile">Enregistrer</button>
+          </div>
+        </div>
+
+        <!-- MESSAGES PRIVÉS (DM) -->
+        <div id="dm-panel" class="view-panel hidden">
+          <div class="box" style="flex:1; display:flex; flex-direction:column; margin-bottom:0;">
+            <h2 style="margin:0 0 12px; font-size:15px;">Messages privés</h2>
+            <div class="dm-layout" style="flex:1;">
+              <div style="border-right:1px solid var(--border); padding-right:10px;">
+                <div class="section-label">Membres</div>
+                <div id="dm-members-list"></div>
+              </div>
+              <div style="display:flex; flex-direction:column; min-height:0;">
+                <div id="dm-peer-header" style="font-weight:600; padding-bottom:8px; border-bottom:1px solid var(--border); margin-bottom:10px;">
+                  Sélectionne un membre
+                </div>
+                <div id="dm-thread" style="flex:1; overflow-y:auto; max-height:320px; margin-bottom:10px;"></div>
+                <div id="dm-composer" class="row hidden">
+                  <input type="text" id="dm-input" placeholder="Écrire un message privé..." style="flex:1;" />
+                  <button id="btn-send-dm">Envoyer</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ADMINISTRATION -->
+        <div id="admin-panel" class="view-panel hidden">
+          <div class="box">
+            <h2 style="margin:0 0 10px; font-size:15px;">Administration</h2>
+            <div class="row" style="margin-bottom:14px;">
+              <button class="ghost sm admin-tab-btn active" data-atab="atab-users" id="atab-btn-users">Membres & Ban</button>
+              <button class="ghost sm admin-tab-btn" data-atab="atab-roles" id="atab-btn-roles">Rôles</button>
+              <button class="ghost sm admin-tab-btn" data-atab="atab-words" id="atab-btn-words">Mots bannis</button>
+              <button class="ghost sm admin-tab-btn" data-atab="atab-logs" id="atab-btn-logs">Logs</button>
+            </div>
+
+            <div id="atab-users" class="admin-sec">
+              <div style="overflow-x:auto;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Membre</th>
+                      <th>Statut</th>
+                      <th>Ban</th>
+                      <th>Validation</th>
+                      <th>Rôle</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-users-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div id="atab-roles" class="admin-sec hidden">
+              <div class="row" style="margin-bottom:12px;">
+                <input type="text" id="role-name" placeholder="Nom du rôle (ex: mod)" />
+                <label class="muted"><input type="checkbox" id="perm-moderate" /> Modérer</label>
+                <label class="muted"><input type="checkbox" id="perm-approve" /> Valider/Ban</label>
+                <label class="muted"><input type="checkbox" id="perm-roles" /> Gérer rôles</label>
+                <label class="muted"><input type="checkbox" id="perm-words" /> Mots bannis</label>
+                <label class="muted"><input type="checkbox" id="perm-logs" /> Logs</label>
+                <button id="btn-add-role" class="sm">Créer</button>
+              </div>
+              <div id="roles-list" class="muted"></div>
+            </div>
+
+            <div id="atab-words" class="admin-sec hidden">
+              <div class="row" style="margin-bottom:10px;">
+                <input type="text" id="banned-word-input" placeholder="Mot interdit..." />
+                <button id="btn-add-word" class="sm">Ajouter</button>
+              </div>
+              <div id="banned-words-list" class="row"></div>
+            </div>
+
+            <div id="atab-logs" class="admin-sec hidden">
+              <table>
+                <thead>
+                  <tr><th>Date</th><th>Action</th><th>Détails</th></tr>
+                </thead>
+                <tbody id="admin-logs-tbody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </main>
+
+      <!-- COLONNE DROITE : MEMBRES -->
+      <aside class="right-col">
+        <div class="section-label">Membres (<span id="members-count">0</span>)</div>
+        <div id="right-members-list"></div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- MODALE FICHE MEMBRE AU CLIC -->
+  <div id="member-modal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div id="modal-banner" class="profile-banner"></div>
+      <div style="padding:0 16px 16px; margin-top:-36px;">
+        <div class="row" style="justify-content:space-between; align-items:flex-end;">
+          <img id="modal-avatar" class="avatar-img avatar-lg" src="" alt="" />
+          <button id="btn-close-modal" class="ghost sm">Fermer</button>
+        </div>
+
+        <div style="margin-top:8px;">
+          <strong id="modal-username" style="font-size:16px;"></strong>
+          <span id="modal-role-tag" class="tag"></span>
+          <span id="modal-ban-tag" class="tag banned hidden">Banni</span>
+        </div>
+
+        <div id="modal-bio" class="muted" style="margin-top:6px;"></div>
+        <div id="modal-ban-reason" class="muted" style="margin-top:4px; color:#f85149;"></div>
+
+        <div class="row" style="margin-top:14px;">
+          <button id="modal-dm-btn" class="sm">Envoyer un DM</button>
+          <button id="modal-ban-btn" class="danger sm hidden">Bannir</button>
+          <button id="modal-unban-btn" class="ok sm hidden">Débannir</button>
+        </div>
+
+        <div id="modal-admin-controls" class="hidden" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+          <div class="muted" style="margin-bottom:6px;">Gestion administrateur</div>
+          <div class="row">
+            <select id="modal-role-select"></select>
+            <button id="modal-approve-btn" class="ok sm">Approuver</button>
+            <button id="modal-reject-btn" class="ghost sm">Refuser</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -432,516 +523,318 @@
 
     const SUPABASE_URL = 'https://sdgkdiybppvsclgakdem.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_eSAcsSsTMF9p5jBUa0tIkA_XnsH3nxP';
-
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    const FALLBACK_AVATAR = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="#252a36"/><circle cx="40" cy="32" r="14" fill="#6e7681"/><ellipse cx="40" cy="66" rx="24" ry="16" fill="#6e7681"/></svg>`
+    );
+
     let session = null;
-    let profile = null;
+    let me = null;
     let perms = {};
     let roles = [];
-    let channels = [];
-    let allTopics = [];
-    let selectedChannelId = null;
-    let selectedTopicId = null;
-    let selectedDmUser = null;
-    let approvedMembers = [];
-    let realtimeSub = null;
-    let activeSection = 'forum';
+    let members = [];
+    let selectedDmPeer = null;
+    let inspectedMember = null;
+    let currentView = 'chat';
+    let realtimeChannel = null;
 
-    const notify = (msg, isError = false) => {
-      const b1 = document.getElementById('status-banner');
-      const b2 = document.getElementById('guest-banner');
-      b1.style.color = isError ? 'var(--danger)' : 'var(--accent)';
-      b2.style.color = isError ? 'var(--danger)' : 'var(--accent)';
-      b1.textContent = msg || '';
-      b2.textContent = msg || '';
+    const esc = (s) => {
+      const d = document.createElement('div');
+      d.textContent = s ?? '';
+      return d.innerHTML;
+    };
+
+    const setNotice = (msg, isErr = false) => {
+      for (const id of ['app-notice', 'guest-notice']) {
+        const el = document.getElementById(id);
+        el.textContent = msg || '';
+        el.classList.toggle('err', !!isErr);
+      }
       if (msg) {
-        clearTimeout(window.__notifyTimer);
-        window.__notifyTimer = setTimeout(() => { b1.textContent = ''; b2.textContent = ''; }, 5000);
+        clearTimeout(window.__nTimer);
+        window.__nTimer = setTimeout(() => setNotice(''), 4000);
       }
     };
 
-    const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+    const canAdmin = () => !!(perms.can_approve_users || perms.can_manage_roles || perms.can_manage_banned_words || perms.can_view_logs || perms.can_moderate);
 
-    function applyAccentColor(color) {
-      const hex = /^#[0-9a-fA-F]{6}$/.test(color || '') ? color : '#38bdf8';
-      document.documentElement.style.setProperty('--accent', hex);
-    }
-
-    function renderAuthorTag(p) {
-      if (!p) return '<span class="meta">Membre inconnu</span>';
-      const color = /^#[0-9a-fA-F]{6}$/.test(p.profile_color || '') ? p.profile_color : '#38bdf8';
-      const bioAttr = p.bio ? `title="${esc(p.bio)}"` : '';
-      return `<span class="avatar-dot" style="background:${color};"></span><strong ${bioAttr}>${esc(p.username)}</strong><span class="badge" style="border-color:${color}; color:${color};">${esc(p.role)}</span>`;
-    }
-
-    function hasAnyAdminPerm(p) {
-      return !!(p.can_approve_users || p.can_manage_roles || p.can_manage_banned_words || p.can_view_logs);
-    }
-
-    function switchSection(sectionName) {
-      activeSection = sectionName;
-      document.getElementById('forum-content').classList.toggle('hidden', sectionName !== 'forum');
-      document.getElementById('dm-panel').classList.toggle('hidden', sectionName !== 'dm');
-      document.getElementById('profile-panel').classList.toggle('hidden', sectionName !== 'profile');
-
-      document.getElementById('btn-nav-forum').classList.toggle('nav-active', sectionName === 'forum');
-      document.getElementById('btn-nav-dm').classList.toggle('nav-active', sectionName === 'dm');
-      document.getElementById('btn-nav-profile').classList.toggle('nav-active', sectionName === 'profile');
+    function showView(name) {
+      currentView = name;
+      for (const [id, key] of [
+        ['chat-panel', 'chat'],
+        ['profile-panel', 'profile'],
+        ['dm-panel', 'dm'],
+        ['admin-panel', 'admin']
+      ]) {
+        document.getElementById(id).classList.toggle('hidden', name !== key);
+      }
+      document.getElementById('btn-nav-chat').classList.toggle('active', name === 'chat');
+      document.getElementById('btn-nav-dm').classList.toggle('active', name === 'dm');
+      document.getElementById('btn-nav-profile').classList.toggle('active', name === 'profile');
+      document.getElementById('btn-toggle-admin').classList.toggle('active', name === 'admin');
     }
 
     async function loadRoles() {
       const { data } = await supabase.from('roles').select('*').order('created_at');
       roles = data || [];
-      document.getElementById('roles-overview').innerHTML = roles.map(r => {
-        const activePerms = [
-          r.can_moderate && 'Modération',
-          r.can_approve_users && 'Validation comptes',
-          r.can_manage_roles && 'Rôles & salons',
-          r.can_manage_banned_words && 'Mots bannis',
-          r.can_view_logs && 'Logs'
-        ].filter(Boolean).join(', ') || 'Aucune permission spéciale';
-        return `<div style="margin-bottom:4px;"><strong>${esc(r.name)}</strong> : ${activePerms}</div>`;
+      document.getElementById('roles-list').innerHTML = roles.map(r => {
+        const list = [
+          r.can_moderate && 'modérer',
+          r.can_approve_users && 'valider/ban',
+          r.can_manage_roles && 'rôles',
+          r.can_manage_banned_words && 'mots bannis',
+          r.can_view_logs && 'logs'
+        ].filter(Boolean).join(', ') || 'aucune';
+        return `<div style="margin-bottom:4px;"><strong>${esc(r.name)}</strong> : ${list}</div>`;
       }).join('');
     }
 
-    async function loadChannelsAndTopics() {
-      const [{ data: chData }, { data: tpData }] = await Promise.all([
-        supabase.from('channels').select('*').order('id', { ascending: true }),
-        supabase.from('topics')
-          .select('id, title, channel_id, created_at, author_id, profiles(username, role, bio, profile_color)')
-          .order('created_at', { ascending: false })
-      ]);
-
-      channels = chData || [];
-      allTopics = tpData || [];
-
-      if (channels.length > 0 && !channels.some(c => c.id === selectedChannelId)) {
-        selectedChannelId = channels[0].id;
-      }
-
-      renderChannels();
-      renderTopicsForChannel();
-    }
-
-    function renderChannels() {
-      const el = document.getElementById('channels-list');
-      if (channels.length === 0) {
-        el.innerHTML = '<div class="meta">Aucun salon disponible.</div>';
-        return;
-      }
-
-      el.innerHTML = channels.map(c => {
-        const count = allTopics.filter(t => t.channel_id === c.id).length;
-        const active = c.id === selectedChannelId ? 'active' : '';
-        return `
-          <div class="channel-item ${active}" data-cid="${c.id}">
-            <div class="channel-header">
-              <span>${esc(c.icon || '💬')} ${esc(c.name)}</span>
-              <span class="count-pill">${count}</span>
-            </div>
-            ${c.description ? `<div class="meta" style="font-size:0.78rem; margin-top:2px;">${esc(c.description)}</div>` : ''}
-          </div>
-        `;
-      }).join('');
-
-      el.querySelectorAll('.channel-item').forEach(item => {
-        item.addEventListener('click', () => {
-          selectedChannelId = Number(item.dataset.cid);
-          selectedTopicId = null;
-          renderChannels();
-          renderTopicsForChannel();
-        });
-      });
-    }
-
-    async function renderTopicsForChannel() {
-      const currentChannel = channels.find(c => c.id === selectedChannelId);
-      document.getElementById('active-channel-heading').textContent = currentChannel
-        ? `${currentChannel.icon || '💬'} ${currentChannel.name}`
-        : 'Sujets';
-      document.getElementById('active-channel-desc').textContent = currentChannel?.description || '';
-
-      const filtered = allTopics.filter(t => t.channel_id === selectedChannelId);
-      const listEl = document.getElementById('topics-list');
-
-      if (filtered.length === 0) {
-        listEl.innerHTML = '<div class="meta">Aucun sujet dans ce salon. Crée le premier !</div>';
-        selectedTopicId = null;
-        document.getElementById('selected-topic-title').textContent = 'Aucun sujet sélectionné';
-        document.getElementById('selected-topic-meta').textContent = '';
-        document.getElementById('posts-list').innerHTML = '<div class="meta">Crée un sujet à gauche pour démarrer la discussion.</div>';
-        document.getElementById('new-post-box').classList.add('hidden');
-        document.getElementById('btn-delete-topic').classList.add('hidden');
-        return;
-      }
-
-      if (!filtered.some(t => t.id === selectedTopicId)) {
-        selectedTopicId = filtered[0].id;
-      }
-
-      listEl.innerHTML = filtered.map(t => `
-        <div class="topic-item ${t.id === selectedTopicId ? 'active' : ''}" data-tid="${t.id}">
-          <div style="font-weight:600; margin-bottom:3px;">${esc(t.title)}</div>
-          <div class="meta">par ${renderAuthorTag(t.profiles)}</div>
-        </div>
-      `).join('');
-
-      listEl.querySelectorAll('.topic-item').forEach(el => {
-        el.addEventListener('click', async () => {
-          selectedTopicId = Number(el.dataset.tid);
-          await renderTopicsForChannel();
-        });
-      });
-
-      const currentTopic = filtered.find(t => t.id === selectedTopicId);
-      if (currentTopic) {
-        document.getElementById('selected-topic-title').textContent = currentTopic.title;
-        document.getElementById('selected-topic-meta').innerHTML =
-          `Lancé par ${renderAuthorTag(currentTopic.profiles)} · ${new Date(currentTopic.created_at).toLocaleString('fr-FR')}`;
-        document.getElementById('new-post-box').classList.remove('hidden');
-
-        const canDelTopic = session && (session.user.id === currentTopic.author_id || perms.can_moderate);
-        document.getElementById('btn-delete-topic').classList.toggle('hidden', !canDelTopic);
-
-        await loadPosts(selectedTopicId);
-      }
-    }
-
-    async function loadPosts(topicId, keepScroll = false) {
-      if (!topicId) return;
-      const { data } = await supabase
-        .from('posts')
-        .select('id, content, created_at, author_id, profiles(username, role, bio, profile_color)')
-        .eq('topic_id', topicId)
-        .order('created_at', { ascending: true });
-
-      const postsEl = document.getElementById('posts-list');
-      if (!data || data.length === 0) {
-        postsEl.innerHTML = '<div class="meta">Aucun message dans ce sujet pour le moment.</div>';
-        return;
-      }
-
-      postsEl.innerHTML = data.map(p => {
-        const canDel = session && (session.user.id === p.author_id || perms.can_moderate);
-        return `
-          <div class="post-card">
-            <div class="row" style="justify-content:space-between;">
-              <div>
-                ${renderAuthorTag(p.profiles)}
-                <span class="meta">· ${new Date(p.created_at).toLocaleString('fr-FR')}</span>
-              </div>
-              ${canDel ? `<button class="danger sm del-post" data-pid="${p.id}">Supprimer</button>` : ''}
-            </div>
-            ${p.profiles?.bio ? `<div class="meta" style="margin-top:3px; font-style:italic;">${esc(p.profiles.bio)}</div>` : ''}
-            <div class="post-body">${esc(p.content)}</div>
-          </div>
-        `;
-      }).join('');
-
-      if (!keepScroll) {
-        postsEl.scrollTop = postsEl.scrollHeight;
-      }
-
-      postsEl.querySelectorAll('.del-post').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const { error } = await supabase.from('posts').delete().eq('id', Number(btn.dataset.pid));
-          if (error) return notify('Suppression refusée : ' + error.message, true);
-          notify('Message supprimé.');
-        });
-      });
-    }
-
-    function setupRealtime() {
-      if (realtimeSub) {
-        supabase.removeChannel(realtimeSub);
-      }
-
-      realtimeSub = supabase
-        .channel('forum-live-sync')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, async (payload) => {
-          const changedTopicId = payload.new?.topic_id || payload.old?.topic_id;
-          if (changedTopicId && Number(changedTopicId) === selectedTopicId) {
-            await loadPosts(selectedTopicId);
-          }
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'topics' }, async () => {
-          await loadChannelsAndTopics();
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'channels' }, async () => {
-          await loadChannelsAndTopics();
-          if (!document.getElementById('admin-panel').classList.contains('hidden')) await loadAdminData();
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'direct_messages' }, async (payload) => {
-          const msg = payload.new || payload.old;
-          if (!msg || !session) return;
-          const involvesMe = msg.sender_id === session.user.id || msg.recipient_id === session.user.id;
-          if (involvesMe && activeSection === 'dm') {
-            if (selectedDmUser && (msg.sender_id === selectedDmUser.id || msg.recipient_id === selectedDmUser.id)) {
-              await loadDmConversation();
-            }
-          }
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async (payload) => {
-          if (session && payload.new?.id === session.user.id) {
-            await refreshUser(true);
-          }
-          if (activeSection === 'dm') await loadDmMembers();
-          if (!document.getElementById('admin-panel').classList.contains('hidden')) await loadAdminData();
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'roles' }, async () => {
-          await loadRoles();
-          await refreshUser(true);
-          if (!document.getElementById('admin-panel').classList.contains('hidden')) await loadAdminData();
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'banned_words' }, async () => {
-          if (!document.getElementById('admin-panel').classList.contains('hidden')) await loadAdminData();
-        })
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, async () => {
-          if (!document.getElementById('admin-panel').classList.contains('hidden')) await loadAdminData();
-        })
-        .subscribe((status) => {
-          const pill = document.getElementById('live-status');
-          if (status === 'SUBSCRIBED') {
-            pill.innerHTML = '<span class="live-dot"></span>En direct';
-          }
-        });
-    }
-
-    async function refreshUser(keepActiveSection = false) {
-      const { data } = await supabase.auth.getSession();
-      session = data.session;
-
-      const guestScreen = document.getElementById('guest-screen');
-      const appScreen = document.getElementById('app-screen');
-      const pendingNotice = document.getElementById('pending-notice');
-      const adminBtn = document.getElementById('btn-toggle-admin');
-      const adminPanel = document.getElementById('admin-panel');
-
-      if (!session) {
-        profile = null;
-        perms = {};
-        applyAccentColor('#38bdf8');
-        guestScreen.classList.remove('hidden');
-        appScreen.classList.add('hidden');
-        if (realtimeSub) { supabase.removeChannel(realtimeSub); realtimeSub = null; }
-        return;
-      }
-
-      guestScreen.classList.add('hidden');
-      appScreen.classList.remove('hidden');
-
-      const { data: p } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-      profile = p;
-      applyAccentColor(profile?.profile_color);
-
-      const roleDef = roles.find(r => r.name === profile?.role) || {};
-      perms = profile?.status === 'approved' ? roleDef : {};
-
-      const statusBadge = profile?.status === 'approved'
-        ? ''
-        : `<span class="badge ${profile?.status}">${profile?.status === 'pending' ? 'En attente' : 'Refusé'}</span>`;
-
-      document.getElementById('current-user-label').innerHTML = `${renderAuthorTag(profile)} ${statusBadge}`;
-
-      if (profile?.status === 'approved') {
-        pendingNotice.classList.add('hidden');
-        document.getElementById('profile-username-input').value = profile.username || '';
-        document.getElementById('profile-bio-input').value = profile.bio || '';
-        document.getElementById('profile-color-input').value = profile.profile_color || '#38bdf8';
-
-        if (!keepActiveSection) {
-          switchSection('forum');
-          await loadChannelsAndTopics();
-        }
-        if (!realtimeSub) setupRealtime();
-      } else {
-        pendingNotice.classList.remove('hidden');
-        document.getElementById('forum-content').classList.add('hidden');
-        document.getElementById('dm-panel').classList.add('hidden');
-        document.getElementById('profile-panel').classList.add('hidden');
-      }
-
-      if (hasAnyAdminPerm(perms)) {
-        adminBtn.classList.remove('hidden');
-        configureAdminTabs();
-      } else {
-        adminBtn.classList.add('hidden');
-        adminPanel.classList.add('hidden');
-      }
-    }
-
-    function configureAdminTabs() {
-      const showUsers = !!(perms.can_approve_users || perms.can_manage_roles);
-      document.getElementById('nav-tab-users').classList.toggle('hidden', !showUsers);
-      document.getElementById('nav-tab-channels').classList.toggle('hidden', !perms.can_manage_roles);
-      document.getElementById('nav-tab-roles').classList.toggle('hidden', !perms.can_manage_roles);
-      document.getElementById('nav-tab-words').classList.toggle('hidden', !perms.can_manage_banned_words);
-      document.getElementById('nav-tab-logs').classList.toggle('hidden', !perms.can_view_logs);
-    }
-
-    async function loadDmMembers() {
+    async function loadMembers() {
       const { data } = await supabase
         .from('profiles')
-        .select('id, username, role, bio, profile_color')
-        .eq('status', 'approved')
-        .neq('id', session.user.id)
+        .select('id, username, role, status, bio, avatar_url, banner_url, profile_color, is_banned, ban_reason')
         .order('username');
+      members = data || [];
 
-      approvedMembers = data || [];
-      const listEl = document.getElementById('dm-users-list');
-      if (approvedMembers.length === 0) {
-        listEl.innerHTML = '<div class="meta">Aucun autre membre approuvé pour le moment.</div>';
+      const approvedVisible = members.filter(m => m.status === 'approved' && !m.is_banned);
+      document.getElementById('members-count').textContent = approvedVisible.length;
+
+      document.getElementById('right-members-list').innerHTML = approvedVisible.map(m => {
+        const col = /^#[0-9a-fA-F]{6}$/.test(m.profile_color || '') ? m.profile_color : '#9aa2b1';
+        return `
+          <div class="member-row" data-mid="${m.id}">
+            <img class="avatar-img avatar-sm" src="${esc(m.avatar_url || FALLBACK_AVATAR)}" alt="" />
+            <span style="color:${col}; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(m.username)}</span>
+            ${m.role === 'admin' ? '<span class="tag">admin</span>' : ''}
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.member-row').forEach(row => {
+        row.addEventListener('click', () => openMemberModal(row.dataset.mid));
+      });
+
+      renderDmList();
+    }
+
+    function openMemberModal(memberId) {
+      const m = members.find(x => x.id === memberId);
+      if (!m) return;
+      inspectedMember = m;
+
+      const bannerEl = document.getElementById('modal-banner');
+      bannerEl.style.backgroundImage = m.banner_url ? `url("${m.banner_url.replace(/"/g, '')}")` : 'none';
+      bannerEl.style.backgroundColor = /^#[0-9a-fA-F]{6}$/.test(m.profile_color || '') ? m.profile_color : '#252a36';
+
+      document.getElementById('modal-avatar').src = m.avatar_url || FALLBACK_AVATAR;
+      document.getElementById('modal-username').textContent = m.username;
+      document.getElementById('modal-role-tag').textContent = m.role || 'member';
+      document.getElementById('modal-ban-tag').classList.toggle('hidden', !m.is_banned);
+      document.getElementById('modal-bio').textContent = m.bio || 'Aucune biographie.';
+      document.getElementById('modal-ban-reason').textContent = m.is_banned && m.ban_reason ? `Motif du ban : ${m.ban_reason}` : '';
+
+      const isSelf = session && m.id === session.user.id;
+      document.getElementById('modal-dm-btn').classList.toggle('hidden', isSelf);
+
+      const canBan = !isSelf && !!(perms.can_approve_users || perms.can_manage_roles);
+      document.getElementById('modal-ban-btn').classList.toggle('hidden', !canBan || !!m.is_banned);
+      document.getElementById('modal-unban-btn').classList.toggle('hidden', !canBan || !m.is_banned);
+
+      const adminBox = document.getElementById('modal-admin-controls');
+      if (canBan || perms.can_manage_roles) {
+        adminBox.classList.remove('hidden');
+        const sel = document.getElementById('modal-role-select');
+        sel.innerHTML = roles.map(r => `<option value="${esc(r.name)}" ${r.name === m.role ? 'selected' : ''}>${esc(r.name)}</option>`).join('');
+        sel.disabled = !perms.can_manage_roles;
+        document.getElementById('modal-approve-btn').classList.toggle('hidden', !perms.can_approve_users);
+        document.getElementById('modal-reject-btn').classList.toggle('hidden', !perms.can_approve_users);
+      } else {
+        adminBox.classList.add('hidden');
+      }
+
+      document.getElementById('member-modal').classList.remove('hidden');
+    }
+
+    async function loadChat() {
+      const { data } = await supabase
+        .from('chat_messages')
+        .select('id, content, created_at, author_id, profiles(id, username, role, avatar_url, profile_color, is_banned)')
+        .order('created_at', { ascending: true })
+        .limit(150);
+
+      const feed = document.getElementById('chat-feed');
+      if (!data || data.length === 0) {
+        feed.innerHTML = '<div class="muted">Aucun message pour l’instant dans # général.</div>';
         return;
       }
 
-      listEl.innerHTML = approvedMembers.map(u => `
-        <div class="user-item ${selectedDmUser?.id === u.id ? 'active' : ''}" data-uid="${u.id}">
-          <div>${renderAuthorTag(u)}</div>
-          <div class="meta">${esc(u.bio || 'Aucune bio')}</div>
-        </div>
-      `).join('');
+      feed.innerHTML = data.map(msg => {
+        const p = msg.profiles;
+        const col = /^#[0-9a-fA-F]{6}$/.test(p?.profile_color || '') ? p.profile_color : '#eceff4';
+        const canDel = session && (session.user.id === msg.author_id || perms.can_moderate);
+        return `
+          <div class="chat-line">
+            <img class="avatar-img" src="${esc(p?.avatar_url || FALLBACK_AVATAR)}" alt="" style="cursor:pointer;" data-mid="${msg.author_id}" />
+            <div style="min-width:0; flex:1;">
+              <div class="row" style="gap:6px;">
+                <strong style="color:${col}; cursor:pointer;" data-mid="${msg.author_id}">${esc(p?.username || 'Membre')}</strong>
+                <span class="tag">${esc(p?.role || '')}</span>
+                <span class="muted">${new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+              <div style="margin-top:2px; white-space:pre-wrap; word-break:break-word;">${esc(msg.content)}</div>
+            </div>
+            ${canDel ? `<button class="danger sm msg-actions del-chat-btn" data-id="${msg.id}">Suppr.</button>` : ''}
+          </div>
+        `;
+      }).join('');
 
-      listEl.querySelectorAll('.user-item').forEach(el => {
-        el.addEventListener('click', async () => {
-          selectedDmUser = approvedMembers.find(m => m.id === el.dataset.uid) || null;
-          await loadDmMembers();
-          if (selectedDmUser) await loadDmConversation();
+      feed.scrollTop = feed.scrollHeight;
+
+      feed.querySelectorAll('[data-mid]').forEach(el => {
+        el.addEventListener('click', () => openMemberModal(el.dataset.mid));
+      });
+      feed.querySelectorAll('.del-chat-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const { error } = await supabase.from('chat_messages').delete().eq('id', Number(btn.dataset.id));
+          if (error) setNotice(error.message, true);
         });
       });
     }
 
-    async function loadDmConversation() {
-      if (!selectedDmUser) return;
-      document.getElementById('dm-chat-title').innerHTML = `Discussion avec ${renderAuthorTag(selectedDmUser)}`;
-      document.getElementById('dm-send-box').classList.remove('hidden');
+    function renderDmList() {
+      const others = members.filter(m => session && m.id !== session.user.id && m.status === 'approved' && !m.is_banned);
+      document.getElementById('dm-members-list').innerHTML = others.map(u => `
+        <div class="member-row ${selectedDmPeer?.id === u.id ? 'channel-active-row' : ''}" data-uid="${u.id}">
+          <img class="avatar-img avatar-sm" src="${esc(u.avatar_url || FALLBACK_AVATAR)}" alt="" />
+          <span>${esc(u.username)}</span>
+        </div>
+      `).join('') || '<div class="muted">Aucun autre membre.</div>';
 
-      const { data, error } = await supabase
-        .from('direct_messages')
-        .select('id, sender_id, recipient_id, content, created_at')
-        .or(`and(sender_id.eq.${session.user.id},recipient_id.eq.${selectedDmUser.id}),and(sender_id.eq.${selectedDmUser.id},recipient_id.eq.${session.user.id})`)
-        .order('created_at', { ascending: true });
-
-      const box = document.getElementById('dm-messages-box');
-      if (error) {
-        box.innerHTML = `<div class="meta">Erreur DM : ${esc(error.message)}</div>`;
-        return;
-      }
-      if (!data || data.length === 0) {
-        box.innerHTML = '<div class="meta">Aucun message privé échangé pour l’instant.</div>';
-        return;
-      }
-
-      box.innerHTML = data.map(m => {
-        const mine = m.sender_id === session.user.id;
-        const senderName = mine ? profile.username : selectedDmUser.username;
-        return `
-          <div class="dm-msg ${mine ? 'mine' : ''}">
-            <div class="meta"><strong>${esc(senderName)}</strong> · ${new Date(m.created_at).toLocaleString('fr-FR')}</div>
-            <div style="margin-top:3px; white-space:pre-wrap;">${esc(m.content)}</div>
-          </div>
-        `;
-      }).join('');
-      box.scrollTop = box.scrollHeight;
+      document.querySelectorAll('#dm-members-list [data-uid]').forEach(el => {
+        el.addEventListener('click', async () => {
+          selectedDmPeer = others.find(x => x.id === el.dataset.uid) || null;
+          renderDmList();
+          await loadDmThread();
+        });
+      });
     }
 
-    async function loadAdminData() {
-      if (perms.can_approve_users || perms.can_manage_roles) {
-        const { data: users } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-        const tbody = document.getElementById('admin-users-tbody');
-        tbody.innerHTML = (users || []).map(u => {
-          const roleSelect = perms.can_manage_roles
-            ? `<select class="user-role-sel" data-uid="${u.id}">
-                ${roles.map(r => `<option value="${esc(r.name)}" ${r.name === u.role ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}
-               </select>`
-            : esc(u.role);
+    async function loadDmThread() {
+      if (!selectedDmPeer || !session) return;
+      document.getElementById('dm-peer-header').textContent = `Message privé — ${selectedDmPeer.username}`;
+      document.getElementById('dm-composer').classList.remove('hidden');
 
-          const approvalBtns = perms.can_approve_users
-            ? `<button class="ok sm status-btn" data-uid="${u.id}" data-status="approved">Accepter</button>
-               <button class="danger sm status-btn" data-uid="${u.id}" data-status="rejected">Refuser</button>`
-            : '-';
+      const { data } = await supabase
+        .from('direct_messages')
+        .select('id, sender_id, recipient_id, content, created_at')
+        .or(`and(sender_id.eq.${session.user.id},recipient_id.eq.${selectedDmPeer.id}),and(sender_id.eq.${selectedDmPeer.id},recipient_id.eq.${session.user.id})`)
+        .order('created_at', { ascending: true });
 
-          return `
-            <tr>
-              <td>${renderAuthorTag(u)}</td>
-              <td class="meta">${esc(u.bio || '-')}</td>
-              <td><span class="badge ${u.status}">${esc(u.status)}</span></td>
-              <td class="row">${approvalBtns}</td>
-              <td>${roleSelect}</td>
-            </tr>
-          `;
-        }).join('');
-
-        tbody.querySelectorAll('.status-btn').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const { error } = await supabase.from('profiles').update({ status: btn.dataset.status }).eq('id', btn.dataset.uid);
-            if (error) return notify('Erreur : ' + error.message, true);
-            notify(`Statut mis à jour (${btn.dataset.status}).`);
-            await loadAdminData();
-          });
-        });
-
-        tbody.querySelectorAll('.user-role-sel').forEach(sel => {
-          sel.addEventListener('change', async () => {
-            const { error } = await supabase.from('profiles').update({ role: sel.value }).eq('id', sel.dataset.uid);
-            if (error) return notify('Erreur : ' + error.message, true);
-            notify(`Rôle mis à jour (${sel.value}).`);
-            await refreshUser(true);
-            await loadAdminData();
-          });
-        });
-      }
-
-      if (perms.can_manage_roles) {
-        const chBox = document.getElementById('admin-channels-list');
-        chBox.innerHTML = channels.map(c => `
-          <div class="row" style="justify-content:space-between; padding:8px 10px; border:1px solid var(--border); border-radius:8px; margin-bottom:6px;">
-            <div><strong>${esc(c.icon)} ${esc(c.name)}</strong> <span class="meta">— ${esc(c.description)}</span></div>
-            <button class="danger sm del-channel-btn" data-cid="${c.id}">Supprimer</button>
+      const thread = document.getElementById('dm-thread');
+      thread.innerHTML = (data || []).map(m => {
+        const mine = m.sender_id === session.user.id;
+        return `
+          <div class="dm-bubble ${mine ? 'mine' : ''}">
+            <div class="muted">${mine ? 'Moi' : esc(selectedDmPeer.username)} · ${new Date(m.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
+            <div style="margin-top:2px; white-space:pre-wrap;">${esc(m.content)}</div>
           </div>
-        `).join('');
+        `;
+      }).join('') || '<div class="muted">Début de la conversation.</div>';
+      thread.scrollTop = thread.scrollHeight;
+    }
 
-        chBox.querySelectorAll('.del-channel-btn').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const { error } = await supabase.from('channels').delete().eq('id', Number(btn.dataset.cid));
-            if (error) return notify('Erreur suppression salon : ' + error.message, true);
-            notify('Salon supprimé.');
-            await loadChannelsAndTopics();
-            await loadAdminData();
-          });
+    async function loadAdmin() {
+      await loadMembers();
+      const tbody = document.getElementById('admin-users-tbody');
+      tbody.innerHTML = members.map(u => {
+        const isSelf = session && u.id === session.user.id;
+        return `
+          <tr>
+            <td>
+              <div class="row" style="gap:6px; cursor:pointer;" data-open-mid="${u.id}">
+                <img class="avatar-img avatar-sm" src="${esc(u.avatar_url || FALLBACK_AVATAR)}" alt="" />
+                <strong>${esc(u.username)}</strong>
+              </div>
+            </td>
+            <td><span class="tag ${u.status}">${esc(u.status)}</span></td>
+            <td>${u.is_banned ? `<span class="tag banned">Banni</span>` : '<span class="muted">Non</span>'}</td>
+            <td class="row">
+              ${perms.can_approve_users ? `
+                <button class="ok sm a-status" data-uid="${u.id}" data-st="approved">Approuver</button>
+                <button class="ghost sm a-status" data-uid="${u.id}" data-st="rejected">Refuser</button>
+              ` : '-'}
+            </td>
+            <td>
+              ${perms.can_manage_roles ? `
+                <select class="a-role" data-uid="${u.id}">
+                  ${roles.map(r => `<option value="${esc(r.name)}" ${r.name === u.role ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}
+                </select>
+              ` : esc(u.role)}
+            </td>
+            <td class="row">
+              ${!isSelf && (perms.can_approve_users || perms.can_manage_roles) ? (
+                u.is_banned
+                  ? `<button class="ok sm a-ban" data-uid="${u.id}" data-ban="0">Débannir</button>`
+                  : `<button class="danger sm a-ban" data-uid="${u.id}" data-ban="1">Bannir</button>`
+              ) : '-'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('[data-open-mid]').forEach(el => el.addEventListener('click', () => openMemberModal(el.dataset.openMid)));
+
+      tbody.querySelectorAll('.a-status').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const { error } = await supabase.from('profiles').update({ status: btn.dataset.st }).eq('id', btn.dataset.uid);
+          if (error) return setNotice(error.message, true);
+          setNotice('Statut mis à jour.');
+          await loadAdmin();
         });
-      }
+      });
+
+      tbody.querySelectorAll('.a-role').forEach(sel => {
+        sel.addEventListener('change', async () => {
+          const { error } = await supabase.from('profiles').update({ role: sel.value }).eq('id', sel.dataset.uid);
+          if (error) return setNotice(error.message, true);
+          setNotice('Rôle mis à jour.');
+          await refreshSession(true);
+          await loadAdmin();
+        });
+      });
+
+      tbody.querySelectorAll('.a-ban').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const ban = btn.dataset.ban === '1';
+          const reason = ban ? (prompt('Motif du bannissement (optionnel) :') || '') : '';
+          const { error } = await supabase.from('profiles').update({ is_banned: ban, ban_reason: reason }).eq('id', btn.dataset.uid);
+          if (error) return setNotice(error.message, true);
+          setNotice(ban ? 'Membre banni.' : 'Membre débanni.');
+          await loadAdmin();
+        });
+      });
 
       if (perms.can_manage_banned_words) {
         const { data: words } = await supabase.from('banned_words').select('*').order('word');
-        const box = document.getElementById('banned-words-list');
-        box.innerHTML = (words || []).map(w => `
-          <span class="badge">
-            ${esc(w.word)}
-            <a href="#" data-wid="${w.id}" class="del-word" style="color:#ef4444; margin-left:6px; text-decoration:none;">×</a>
-          </span>
-        `).join('') || '<span class="meta">Aucun mot banni configuré.</span>';
+        document.getElementById('banned-words-list').innerHTML = (words || []).map(w => `
+          <span class="tag">${esc(w.word)} <a href="#" class="del-w" data-wid="${w.id}" style="color:#f85149; text-decoration:none; margin-left:4px;">×</a></span>
+        `).join('') || '<span class="muted">Aucun mot banni.</span>';
 
-        box.querySelectorAll('.del-word').forEach(a => {
+        document.querySelectorAll('.del-w').forEach(a => {
           a.addEventListener('click', async (e) => {
             e.preventDefault();
             await supabase.from('banned_words').delete().eq('id', Number(a.dataset.wid));
-            notify('Mot banni retiré.');
-            await loadAdminData();
+            await loadAdmin();
           });
         });
       }
 
       if (perms.can_view_logs) {
-        const { data: logs } = await supabase
-          .from('audit_logs')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(50);
-
+        const { data: logs } = await supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50);
         document.getElementById('admin-logs-tbody').innerHTML = (logs || []).map(l => `
           <tr>
-            <td class="meta">${new Date(l.created_at).toLocaleString('fr-FR')}</td>
+            <td class="muted">${new Date(l.created_at).toLocaleString('fr-FR')}</td>
             <td><strong>${esc(l.action)}</strong></td>
             <td>${esc(l.details)}</td>
           </tr>
@@ -949,202 +842,332 @@
       }
     }
 
-    // NAVIGATION & ÉVÉNEMENTS
-    document.getElementById('btn-nav-forum').addEventListener('click', async () => {
-      if (profile?.status !== 'approved') return;
-      switchSection('forum');
-      await loadChannelsAndTopics();
-    });
+    function syncProfileForm() {
+      if (!me) return;
+      document.getElementById('me-mini-avatar').src = me.avatar_url || FALLBACK_AVATAR;
+      document.getElementById('me-mini-name').textContent = me.username || '';
+      document.getElementById('me-mini-role').textContent = me.is_banned ? 'Banni' : (me.role || '');
 
-    document.getElementById('btn-nav-dm').addEventListener('click', async () => {
-      if (profile?.status !== 'approved') return;
-      switchSection('dm');
-      await loadDmMembers();
-      if (selectedDmUser) await loadDmConversation();
-    });
+      document.getElementById('prof-username').value = me.username || '';
+      document.getElementById('prof-bio').value = me.bio || '';
+      document.getElementById('prof-color').value = me.profile_color || '#5865f2';
+      document.getElementById('prof-avatar-url').value = me.avatar_url || '';
+      document.getElementById('prof-banner-url').value = me.banner_url || '';
 
-    document.getElementById('btn-nav-profile').addEventListener('click', () => {
-      if (profile?.status !== 'approved') return;
-      switchSection('profile');
-    });
-
-    document.getElementById('btn-save-profile').addEventListener('click', async () => {
-      const username = document.getElementById('profile-username-input').value.trim();
-      const bio = document.getElementById('profile-bio-input').value.trim();
-      const profile_color = document.getElementById('profile-color-input').value;
-      if (!username) return notify('Le pseudo ne peut pas être vide.', true);
-      const { error } = await supabase
-        .from('profiles')
-        .update({ username, bio, profile_color })
-        .eq('id', session.user.id);
-      if (error) return notify('Erreur profil : ' + error.message, true);
-      notify('Profil mis à jour !');
-      await refreshUser(true);
-    });
-
-    async function sendDmMessage() {
-      const input = document.getElementById('dm-input');
-      const content = input.value.trim();
-      if (!content || !selectedDmUser) return;
-      input.value = '';
-      const { error } = await supabase.from('direct_messages').insert({
-        sender_id: session.user.id,
-        recipient_id: selectedDmUser.id,
-        content
-      });
-      if (error) return notify('Erreur DM : ' + error.message, true);
-      await loadDmConversation();
+      document.getElementById('preview-username').textContent = me.username || '';
+      document.getElementById('preview-role-tag').textContent = me.role || '';
+      document.getElementById('preview-bio').textContent = me.bio || 'Aucune biographie.';
+      document.getElementById('preview-avatar').src = me.avatar_url || FALLBACK_AVATAR;
+      const b = document.getElementById('preview-banner');
+      b.style.backgroundImage = me.banner_url ? `url("${me.banner_url.replace(/"/g, '')}")` : 'none';
+      b.style.backgroundColor = /^#[0-9a-fA-F]{6}$/.test(me.profile_color || '') ? me.profile_color : '#252a36';
     }
 
-    document.getElementById('btn-send-dm').addEventListener('click', sendDmMessage);
-    document.getElementById('dm-input').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); sendDmMessage(); }
-    });
+    function subscribeRealtime() {
+      if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+      realtimeChannel = supabase
+        .channel('discord-general-live')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, () => {
+          if (me?.status === 'approved' && !me?.is_banned) loadChat();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async (payload) => {
+          await loadMembers();
+          if (session && payload.new?.id === session.user.id) {
+            await refreshSession(true);
+          }
+          if (currentView === 'admin') await loadAdmin();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'direct_messages' }, (payload) => {
+          const m = payload.new || payload.old;
+          if (!m || !session) return;
+          if ((m.sender_id === session.user.id || m.recipient_id === session.user.id) && currentView === 'dm') {
+            loadDmThread();
+          }
+        })
+        .subscribe();
+    }
 
-    document.getElementById('btn-toggle-admin').addEventListener('click', async () => {
-      const panel = document.getElementById('admin-panel');
-      panel.classList.toggle('hidden');
-      if (!panel.classList.contains('hidden')) await loadAdminData();
-    });
+    async function refreshSession(keepView = false) {
+      const { data } = await supabase.auth.getSession();
+      session = data.session;
 
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.tab).classList.remove('hidden');
-        await loadAdminData();
-      });
-    });
+      if (!session) {
+        me = null;
+        perms = {};
+        document.getElementById('guest-screen').classList.remove('hidden');
+        document.getElementById('app-screen').classList.add('hidden');
+        if (realtimeChannel) { supabase.removeChannel(realtimeChannel); realtimeChannel = null; }
+        return;
+      }
 
-    document.getElementById('btn-add-channel').addEventListener('click', async () => {
-      const icon = document.getElementById('channel-icon-input').value.trim() || '💬';
-      const name = document.getElementById('channel-name-input').value.trim();
-      const description = document.getElementById('channel-desc-input').value.trim();
-      if (!name) return notify('Entre un nom de salon.', true);
-      const { error } = await supabase.from('channels').insert({ icon, name, description });
-      if (error) return notify('Erreur création salon : ' + error.message, true);
-      document.getElementById('channel-name-input').value = '';
-      document.getElementById('channel-desc-input').value = '';
-      notify(`Salon "${name}" créé.`);
-      await loadChannelsAndTopics();
-      await loadAdminData();
-    });
+      document.getElementById('guest-screen').classList.add('hidden');
+      document.getElementById('app-screen').classList.remove('hidden');
 
-    document.getElementById('btn-add-role').addEventListener('click', async () => {
-      const name = document.getElementById('role-name').value.trim().toLowerCase();
-      if (!name) return notify('Entre un nom de rôle.', true);
-      const payload = {
-        name,
-        can_moderate: document.getElementById('perm-moderate').checked,
-        can_approve_users: document.getElementById('perm-approve').checked,
-        can_manage_roles: document.getElementById('perm-roles').checked,
-        can_manage_banned_words: document.getElementById('perm-words').checked,
-        can_view_logs: document.getElementById('perm-logs').checked
-      };
-      const { error } = await supabase.from('roles').insert(payload);
-      if (error) return notify('Erreur création rôle : ' + error.message, true);
-      document.getElementById('role-name').value = '';
-      notify(`Rôle "${name}" créé.`);
-      await loadRoles();
-      await loadAdminData();
-    });
+      const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+      me = prof;
+      syncProfileForm();
 
-    document.getElementById('btn-add-word').addEventListener('click', async () => {
-      const word = document.getElementById('banned-word-input').value.trim().toLowerCase();
-      if (!word) return;
-      const { error } = await supabase.from('banned_words').insert({ word, added_by: session.user.id });
-      if (error) return notify('Erreur mot banni : ' + error.message, true);
-      document.getElementById('banned-word-input').value = '';
-      notify(`Mot banni "${word}" ajouté.`);
-      await loadAdminData();
-    });
+      const rDef = roles.find(r => r.name === me?.role) || {};
+      const allowed = me?.status === 'approved' && !me?.is_banned;
+      perms = allowed ? rDef : {};
 
-    document.getElementById('btn-refresh-logs').addEventListener('click', loadAdminData);
+      document.getElementById('btn-toggle-admin').classList.toggle('hidden', !allowed || !canAdmin());
 
+      const blocked = document.getElementById('blocked-panel');
+      if (!allowed) {
+        blocked.classList.remove('hidden');
+        for (const id of ['chat-panel', 'profile-panel', 'dm-panel', 'admin-panel']) {
+          document.getElementById(id).classList.add('hidden');
+        }
+        if (me?.is_banned) {
+          document.getElementById('blocked-title').textContent = 'Compte banni';
+          document.getElementById('blocked-desc').textContent = me.ban_reason ? `Motif : ${me.ban_reason}` : 'Ton accès au forum a été suspendu par un administrateur.';
+        } else {
+          document.getElementById('blocked-title').textContent = me?.status === 'rejected' ? 'Compte refusé' : 'Compte en attente de validation';
+          document.getElementById('blocked-desc').textContent = 'Un administrateur doit valider ton compte avant que tu puisses accéder au salon # général.';
+        }
+        return;
+      }
+
+      blocked.classList.add('hidden');
+      await loadMembers();
+      if (!keepView) {
+        showView('chat');
+        await loadChat();
+      }
+      if (!realtimeChannel) subscribeRealtime();
+    }
+
+    async function uploadAsset(file, kind) {
+      const ext = (file.name.split('.').pop() || 'png').replace(/[^a-zA-Z0-9]/g, '');
+      const path = `${session.user.id}/${kind}_${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+      return data.publicUrl;
+    }
+
+    // EVENTS
     document.getElementById('btn-signup').addEventListener('click', async () => {
       const username = document.getElementById('auth-username').value.trim();
       const email = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-password').value;
-      if (!username || !email || !password) return notify('Remplis tous les champs.', true);
+      if (!username || !email || !password) return setNotice('Remplis pseudo, e-mail et mot de passe.', true);
       const { error } = await supabase.auth.signUp({ email, password, options: { data: { username } } });
-      if (error) return notify('Erreur : ' + error.message, true);
-      notify('Compte créé ! Connecte-toi ou attends la validation d’un administrateur.');
-      await refreshUser();
+      if (error) return setNotice(error.message, true);
+      setNotice('Compte créé.');
+      await refreshSession();
     });
 
     document.getElementById('btn-login').addEventListener('click', async () => {
       const email = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-password').value;
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return notify('Erreur : ' + error.message, true);
-      notify('');
-      await refreshUser();
+      if (error) return setNotice(error.message, true);
+      setNotice('');
+      await refreshSession();
     });
 
     document.getElementById('btn-logout').addEventListener('click', async () => {
       await supabase.auth.signOut();
-      notify('Déconnecté.');
-      await refreshUser();
+      await refreshSession();
     });
 
-    async function createTopic() {
-      const input = document.getElementById('topic-title-input');
-      const title = input.value.trim();
-      if (!title || !selectedChannelId) return;
-      const btn = document.getElementById('btn-create-topic');
-      btn.disabled = true;
-      const { data, error } = await supabase
-        .from('topics')
-        .insert({ title, author_id: session.user.id, channel_id: selectedChannelId })
-        .select()
-        .single();
-      btn.disabled = false;
-      if (error) return notify(error.message, true);
-      input.value = '';
-      selectedTopicId = data.id;
-      notify('Sujet créé.');
-      await loadChannelsAndTopics();
+    document.getElementById('btn-nav-chat').addEventListener('click', async () => {
+      if (me?.status !== 'approved' || me?.is_banned) return;
+      showView('chat');
+      await loadChat();
+    });
+
+    document.getElementById('btn-nav-dm').addEventListener('click', async () => {
+      if (me?.status !== 'approved' || me?.is_banned) return;
+      showView('dm');
+      renderDmList();
+      if (selectedDmPeer) await loadDmThread();
+    });
+
+    document.getElementById('btn-nav-profile').addEventListener('click', () => {
+      if (me?.status !== 'approved' || me?.is_banned) return;
+      syncProfileForm();
+      showView('profile');
+    });
+
+    document.getElementById('me-sidebar-card').addEventListener('click', () => {
+      if (me?.status === 'approved' && !me?.is_banned) {
+        syncProfileForm();
+        showView('profile');
+      }
+    });
+
+    document.getElementById('btn-toggle-admin').addEventListener('click', async () => {
+      if (!canAdmin()) return;
+      showView('admin');
+      await loadAdmin();
+    });
+
+    async function sendChatMessage() {
+      const inp = document.getElementById('chat-input');
+      const content = inp.value.trim();
+      if (!content || !session) return;
+      inp.value = '';
+      const { error } = await supabase.from('chat_messages').insert({ author_id: session.user.id, content });
+      if (error) setNotice(error.message, true);
     }
 
-    document.getElementById('btn-create-topic').addEventListener('click', createTopic);
-    document.getElementById('topic-title-input').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); createTopic(); }
+    document.getElementById('btn-send-chat').addEventListener('click', sendChatMessage);
+    document.getElementById('chat-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); sendChatMessage(); }
     });
 
-    document.getElementById('btn-delete-topic').addEventListener('click', async () => {
-      if (!selectedTopicId) return;
-      const { error } = await supabase.from('topics').delete().eq('id', selectedTopicId);
-      if (error) return notify('Suppression refusée : ' + error.message, true);
-      selectedTopicId = null;
-      notify('Sujet supprimé.');
-      await loadChannelsAndTopics();
+    document.getElementById('btn-save-profile').addEventListener('click', async () => {
+      const username = document.getElementById('prof-username').value.trim();
+      const bio = document.getElementById('prof-bio').value.trim();
+      const profile_color = document.getElementById('prof-color').value;
+      let avatar_url = document.getElementById('prof-avatar-url').value.trim();
+      let banner_url = document.getElementById('prof-banner-url').value.trim();
+
+      if (!username) return setNotice('Le pseudo est requis.', true);
+
+      try {
+        const avFile = document.getElementById('prof-avatar-file').files[0];
+        const bnFile = document.getElementById('prof-banner-file').files[0];
+        if (avFile) avatar_url = await uploadAsset(avFile, 'avatar');
+        if (bnFile) banner_url = await uploadAsset(bnFile, 'banner');
+      } catch (err) {
+        return setNotice('Upload image : ' + err.message, true);
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ username, bio, profile_color, avatar_url, banner_url })
+        .eq('id', session.user.id);
+
+      if (error) return setNotice(error.message, true);
+      document.getElementById('prof-avatar-file').value = '';
+      document.getElementById('prof-banner-file').value = '';
+      setNotice('Profil enregistré.');
+      await refreshSession(true);
+      await loadMembers();
+      await loadChat();
     });
 
-    async function createPost() {
-      const input = document.getElementById('post-content-input');
-      const content = input.value.trim();
-      if (!content || !selectedTopicId) return;
-      const btn = document.getElementById('btn-create-post');
-      btn.disabled = true;
-      const { error } = await supabase.from('posts').insert({
-        topic_id: selectedTopicId,
-        author_id: session.user.id,
+    async function sendDm() {
+      const inp = document.getElementById('dm-input');
+      const content = inp.value.trim();
+      if (!content || !selectedDmPeer || !session) return;
+      inp.value = '';
+      const { error } = await supabase.from('direct_messages').insert({
+        sender_id: session.user.id,
+        recipient_id: selectedDmPeer.id,
         content
       });
-      btn.disabled = false;
-      if (error) return notify(error.message, true);
-      input.value = '';
-      await loadPosts(selectedTopicId);
+      if (error) return setNotice(error.message, true);
+      await loadDmThread();
     }
 
-    document.getElementById('btn-create-post').addEventListener('click', createPost);
-    document.getElementById('post-content-input').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); createPost(); }
+    document.getElementById('btn-send-dm').addEventListener('click', sendDm);
+    document.getElementById('dm-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); sendDm(); }
+    });
+
+    // MODAL FICHE MEMBRE
+    document.getElementById('btn-close-modal').addEventListener('click', () => {
+      document.getElementById('member-modal').classList.add('hidden');
+      inspectedMember = null;
+    });
+    document.getElementById('member-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'member-modal') {
+        document.getElementById('member-modal').classList.add('hidden');
+        inspectedMember = null;
+      }
+    });
+    document.getElementById('modal-dm-btn').addEventListener('click', async () => {
+      if (!inspectedMember) return;
+      selectedDmPeer = inspectedMember;
+      document.getElementById('member-modal').classList.add('hidden');
+      showView('dm');
+      renderDmList();
+      await loadDmThread();
+    });
+    document.getElementById('modal-ban-btn').addEventListener('click', async () => {
+      if (!inspectedMember) return;
+      const reason = prompt('Motif du bannissement (optionnel) :') || '';
+      const { error } = await supabase.from('profiles').update({ is_banned: true, ban_reason: reason }).eq('id', inspectedMember.id);
+      if (error) return setNotice(error.message, true);
+      setNotice(`${inspectedMember.username} a été banni.`);
+      await loadMembers();
+      openMemberModal(inspectedMember.id);
+    });
+    document.getElementById('modal-unban-btn').addEventListener('click', async () => {
+      if (!inspectedMember) return;
+      const { error } = await supabase.from('profiles').update({ is_banned: false, ban_reason: '' }).eq('id', inspectedMember.id);
+      if (error) return setNotice(error.message, true);
+      setNotice(`${inspectedMember.username} a été débanni.`);
+      await loadMembers();
+      openMemberModal(inspectedMember.id);
+    });
+    document.getElementById('modal-role-select').addEventListener('change', async (e) => {
+      if (!inspectedMember) return;
+      const { error } = await supabase.from('profiles').update({ role: e.target.value }).eq('id', inspectedMember.id);
+      if (error) return setNotice(error.message, true);
+      setNotice('Rôle mis à jour.');
+      await loadMembers();
+      openMemberModal(inspectedMember.id);
+    });
+    document.getElementById('modal-approve-btn').addEventListener('click', async () => {
+      if (!inspectedMember) return;
+      const { error } = await supabase.from('profiles').update({ status: 'approved' }).eq('id', inspectedMember.id);
+      if (error) return setNotice(error.message, true);
+      setNotice('Membre approuvé.');
+      await loadMembers();
+    });
+    document.getElementById('modal-reject-btn').addEventListener('click', async () => {
+      if (!inspectedMember) return;
+      const { error } = await supabase.from('profiles').update({ status: 'rejected' }).eq('id', inspectedMember.id);
+      if (error) return setNotice(error.message, true);
+      setNotice('Membre refusé.');
+      await loadMembers();
+    });
+
+    // ADMIN TABS & ACTIONS
+    document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.admin-sec').forEach(s => s.classList.add('hidden'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.atab).classList.remove('hidden');
+        await loadAdmin();
+      });
+    });
+
+    document.getElementById('btn-add-role').addEventListener('click', async () => {
+      const name = document.getElementById('role-name').value.trim().toLowerCase();
+      if (!name) return;
+      const { error } = await supabase.from('roles').insert({
+        name,
+        can_moderate: document.getElementById('perm-moderate').checked,
+        can_approve_users: document.getElementById('perm-approve').checked,
+        can_manage_roles: document.getElementById('perm-roles').checked,
+        can_manage_banned_words: document.getElementById('perm-words').checked,
+        can_view_logs: document.getElementById('perm-logs').checked
+      });
+      if (error) return setNotice(error.message, true);
+      document.getElementById('role-name').value = '';
+      await loadRoles();
+      await loadAdmin();
+    });
+
+    document.getElementById('btn-add-word').addEventListener('click', async () => {
+      const word = document.getElementById('banned-word-input').value.trim().toLowerCase();
+      if (!word || !session) return;
+      const { error } = await supabase.from('banned_words').insert({ word, added_by: session.user.id });
+      if (error) return setNotice(error.message, true);
+      document.getElementById('banned-word-input').value = '';
+      await loadAdmin();
     });
 
     await loadRoles();
-    await refreshUser();
+    await refreshSession();
   </script>
 </body>
 </html>
