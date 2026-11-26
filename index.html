@@ -46,6 +46,19 @@
     }
     .auth-card h1 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
     .auth-card input, .auth-card button { width: 100%; margin-top: 10px; }
+    .auto-login-bar {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: rgba(88, 101, 242, 0.14);
+      border: 1px solid rgba(88, 101, 242, 0.45);
+      color: #c9d1ff;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
 
     /* APP SHELL */
     .app-shell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -275,6 +288,17 @@
       padding: 16px;
       overflow-y: auto;
     }
+    .chat-header-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(23, 26, 33, 0.65);
+      font-size: 12px;
+      flex-shrink: 0;
+    }
     .chat-feed {
       flex: 1;
       overflow-y: auto;
@@ -316,21 +340,67 @@
     .chat-line:hover .msg-actions { opacity: 1; }
     .msg-actions { opacity: 0; transition: opacity 0.12s; margin-left: auto; }
     .chat-input-bar {
-      padding: 12px 16px 16px;
+      padding: 10px 16px 16px;
       background: var(--bg);
       flex-shrink: 0;
     }
+    .attachment-preview {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .attachment-preview img {
+      width: 44px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+    .msg-image {
+      display: block;
+      max-width: min(380px, 100%);
+      max-height: 280px;
+      border-radius: 6px;
+      margin-top: 6px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      object-fit: cover;
+    }
+    .msg-file-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 12.5px;
+    }
+    .msg-file-card:hover {
+      border-color: var(--accent);
+      background: var(--panel-2);
+    }
     .chat-input-box {
-      display: flex; gap: 8px;
+      display: flex; gap: 8px; align-items: center;
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: 6px 8px;
     }
-    .chat-input-box input {
+    .chat-input-box input[type="text"] {
       flex: 1; background: transparent; border: none; padding: 6px 8px;
     }
-    .chat-input-box input:focus { outline: none; }
+    .chat-input-box input[type="text"]:focus { outline: none; }
 
     /* RIGHT MEMBERS LIST */
     .right-col {
@@ -417,6 +487,7 @@
       user-select: none;
     }
     button:hover:not(:disabled) { background: var(--accent-hover); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
     button.ghost { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
     button.ghost:hover:not(:disabled) { background: #2f3646; }
     button.ghost.active { background: rgba(88, 101, 242, 0.2); border-color: var(--accent); color: #fff; }
@@ -436,16 +507,23 @@
     .hidden { display: none !important; }
     .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
-    /* MODAL FICHE MEMBRE */
+    /* MODAL FICHE MEMBRE & IMAGE */
     .modal-backdrop {
-      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65);
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.72);
       display: flex; align-items: center; justify-content: center;
-      padding: 16px; z-index: 50;
+      padding: 16px; z-index: 60;
     }
     .modal-card {
       width: 100%; max-width: 440px;
       background: var(--panel); border: 1px solid var(--border);
       border-radius: 8px; overflow: hidden;
+    }
+    .lightbox-img {
+      max-width: 92vw;
+      max-height: 86vh;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
     }
 
     /* DM GRID */
@@ -480,7 +558,7 @@
     }
     .dm-composer-wrap {
       margin-top: auto;
-      padding-top: 12px;
+      padding-top: 10px;
       border-top: 1px solid var(--border);
       flex-shrink: 0;
     }
@@ -515,13 +593,18 @@
   <!-- ÉCRAN DE CONNEXION OBLIGATOIRE -->
   <div id="guest-screen" class="auth-wrap">
     <form id="auth-form" class="auth-card" novalidate>
-      <h1>Connexion au forum <span class="tag">v15</span></h1>
-      <div class="muted">Identifie-toi ou crée un compte pour accéder au salon # général.</div>
+      <h1>Connexion au forum <span class="tag">v16</span></h1>
+      <div class="muted">Identifie-toi (connexion auto après 3 s si e-mail + mot de passe remplis) ou crée un compte.</div>
       <div id="guest-notice" class="notice" style="margin-top:8px; min-height:22px; white-space:normal; overflow:visible;"></div>
 
       <input type="text" id="auth-username" placeholder="Pseudo (inscription uniquement)" autocomplete="username" />
       <input type="email" id="auth-email" placeholder="Adresse e-mail" autocomplete="email" inputmode="email" />
       <input type="password" id="auth-password" placeholder="Mot de passe" autocomplete="current-password" />
+
+      <div id="auto-login-bar" class="auto-login-bar hidden">
+        <span id="auto-login-text">Connexion automatique dans 3s...</span>
+        <button type="button" id="btn-cancel-autologin" class="ghost sm" style="width:auto; margin-top:0;">Annuler</button>
+      </div>
 
       <button type="button" id="btn-login">Se connecter</button>
       <button type="button" id="btn-signup" class="ghost">Créer un compte</button>
@@ -568,7 +651,7 @@
             <span>#</span>
             <span>général</span>
           </div>
-          <div class="muted" style="padding:8px 10px;">Discussions en direct avec les membres approuvés.</div>
+          <div class="muted" style="padding:8px 10px;">Discussions en direct, photos &amp; fichiers.</div>
         </div>
 
         <div id="me-sidebar-card" class="me-mini">
@@ -592,10 +675,17 @@
 
         <!-- SALON GÉNÉRAL (TCHAT STYLE DISCORD) -->
         <div id="chat-panel" class="hidden" style="display:flex; flex-direction:column; flex:1; min-height:0;">
+          <div class="chat-header-strip">
+            <span class="muted">Commande admin : tapez <code style="color:var(--text);">/clear</code> ou <code style="color:var(--text);">/purge</code> pour tout supprimer</span>
+            <button id="btn-clear-chat-admin" class="danger sm hidden">Vider le salon</button>
+          </div>
           <div id="chat-feed" class="chat-feed" style="padding:14px 16px;"></div>
           <div class="chat-input-bar">
+            <div id="chat-attachment-preview" class="attachment-preview hidden"></div>
             <div class="chat-input-box">
-              <input type="text" id="chat-input" placeholder="Envoyer un message dans # général..." />
+              <input type="file" id="chat-file-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.zip,.rar,.7z,.mp3,.mp4,.webm" />
+              <button type="button" id="btn-attach-chat" class="ghost sm" title="Ajouter une photo, image ou fichier">📎 Fichier / Photo</button>
+              <input type="text" id="chat-input" placeholder="Envoyer un message ou /clear dans # général..." />
               <button id="btn-send-chat">Envoyer</button>
             </div>
           </div>
@@ -661,7 +751,7 @@
                   <div class="section-label" style="color:#e3b341;">Demandes reçues</div>
                   <div id="dm-requests-list"></div>
                 </div>
-                <div class="section-label">Amis & discussions</div>
+                <div class="section-label">Amis &amp; discussions</div>
                 <div id="dm-members-list"></div>
               </div>
               <div class="dm-chat-pane">
@@ -671,7 +761,10 @@
                 <div id="dm-request-banner" class="dm-request-banner hidden"></div>
                 <div id="dm-thread" class="dm-thread"></div>
                 <div id="dm-composer-wrap" class="dm-composer-wrap hidden">
+                  <div id="dm-attachment-preview" class="attachment-preview hidden"></div>
                   <div id="dm-composer" class="row">
+                    <input type="file" id="dm-file-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.zip,.rar,.7z,.mp3,.mp4,.webm" />
+                    <button type="button" id="btn-attach-dm" class="ghost sm" title="Ajouter une photo, image ou fichier">📎</button>
                     <input type="text" id="dm-input" placeholder="Écrire un message privé..." style="flex:1;" />
                     <button id="btn-send-dm">Envoyer</button>
                   </div>
@@ -772,6 +865,14 @@
   <!-- TOAST NOTIFICATION FLOTTANTE -->
   <div id="dm-toast" class="toast-notif hidden"></div>
 
+  <!-- LIGHTBOX IMAGE -->
+  <div id="lightbox-modal" class="modal-backdrop hidden">
+    <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+      <img id="lightbox-img" class="lightbox-img" src="" alt="Aperçu" />
+      <button type="button" id="btn-close-lightbox" class="ghost sm">Fermer l’aperçu</button>
+    </div>
+  </div>
+
   <!-- MODALE FICHE MEMBRE AU CLIC -->
   <div id="member-modal" class="modal-backdrop hidden">
     <div class="modal-card">
@@ -821,6 +922,8 @@
       `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="#252a36"/><circle cx="40" cy="32" r="14" fill="#6e7681"/><ellipse cx="40" cy="66" rx="24" ry="16" fill="#6e7681"/></svg>`
     );
 
+    const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15 Mo
+
     let session = null;
     let me = null;
     let perms = {};
@@ -835,6 +938,15 @@
     let presenceChannel = null;
     let onlineUserIds = new Set();
     let toastPeerId = null;
+
+    // Pièces jointes en attente
+    let pendingChatFile = null;
+    let pendingDmFile = null;
+
+    // Auto-login après 3 secondes si champs remplis
+    let autoLoginTimer = null;
+    let autoLoginInterval = null;
+    let autoLoginCancelled = false;
 
     function isUserOnline(userId) {
       if (!userId) return false;
@@ -872,6 +984,98 @@
       }
     };
 
+    function formatBytes(bytes) {
+      if (!bytes || bytes <= 0) return '';
+      if (bytes < 1024) return `${bytes} o`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+    }
+
+    function isImageFile(fileOrName, mime = '') {
+      if (mime && mime.startsWith('image/')) return true;
+      const name = typeof fileOrName === 'string' ? fileOrName : (fileOrName?.name || '');
+      return /\.(png|jpe?g|gif|webp|bmp|svg|avif)$/i.test(name);
+    }
+
+    // Encodage / décodage de pièces jointes dans le contenu message (compatible sans migration SQL)
+    function encodeMessagePayload(text, attachment) {
+      if (!attachment) return text;
+      return '__ATTACH__' + JSON.stringify({
+        text: text || '',
+        url: attachment.url,
+        name: attachment.name || 'fichier',
+        mime: attachment.mime || '',
+        size: attachment.size || 0
+      });
+    }
+
+    function decodeMessagePayload(rawContent) {
+      if (typeof rawContent === 'string' && rawContent.startsWith('__ATTACH__')) {
+        try {
+          const parsed = JSON.parse(rawContent.slice('__ATTACH__'.length));
+          return {
+            text: parsed.text || '',
+            attachment: parsed.url ? {
+              url: parsed.url,
+              name: parsed.name || 'fichier',
+              mime: parsed.mime || '',
+              size: parsed.size || 0
+            } : null
+          };
+        } catch (_) {}
+      }
+      return { text: rawContent || '', attachment: null };
+    }
+
+    function renderAttachmentHtml(att) {
+      if (!att || !att.url) return '';
+      const safeUrl = esc(att.url);
+      const safeName = esc(att.name || 'Fichier');
+      const sizeStr = att.size ? ` (${formatBytes(att.size)})` : '';
+      if (isImageFile(att.name, att.mime) || isImageFile(att.url, att.mime)) {
+        return `<img class="msg-image lightbox-trigger" src="${safeUrl}" alt="${safeName}" title="Cliquer pour agrandir" />`;
+      }
+      return `
+        <a class="msg-file-card" href="${safeUrl}" target="_blank" rel="noopener noreferrer" download="${safeName}">
+          <span>📄</span>
+          <span><strong>${safeName}</strong><span class="muted">${sizeStr}</span></span>
+          <span class="muted">Télécharger</span>
+        </a>
+      `;
+    }
+
+    function bindLightboxTriggers(container) {
+      container.querySelectorAll('.lightbox-trigger').forEach(img => {
+        img.addEventListener('click', () => {
+          document.getElementById('lightbox-img').src = img.src;
+          document.getElementById('lightbox-modal').classList.remove('hidden');
+        });
+      });
+    }
+
+    function renderAttachmentPreview(targetEl, pendingObj, onClear) {
+      if (!pendingObj) {
+        targetEl.classList.add('hidden');
+        targetEl.innerHTML = '';
+        return;
+      }
+      targetEl.classList.remove('hidden');
+      const thumbHtml = pendingObj.previewUrl && isImageFile(pendingObj.file)
+        ? `<img src="${esc(pendingObj.previewUrl)}" alt="" />`
+        : `<span style="font-size:20px;">📎</span>`;
+      targetEl.innerHTML = `
+        <div class="row" style="gap:8px; min-width:0; flex:1;">
+          ${thumbHtml}
+          <div style="min-width:0; flex:1;">
+            <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(pendingObj.file.name)}</div>
+            <div class="muted">${formatBytes(pendingObj.file.size)}</div>
+          </div>
+        </div>
+        <button type="button" class="ghost sm" id="btn-clear-att-temp">Retirer</button>
+      `;
+      targetEl.querySelector('#btn-clear-att-temp')?.addEventListener('click', onClear);
+    }
+
     function playNotifSound() {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -891,16 +1095,18 @@
 
     function showDmToast(senderName, previewText, peerId) {
       toastPeerId = peerId;
+      const decoded = decodeMessagePayload(previewText);
+      const label = decoded.text || (decoded.attachment ? `📎 ${decoded.attachment.name}` : 'Nouveau message');
       const toast = document.getElementById('dm-toast');
       toast.innerHTML = `
         <div style="font-weight:600; font-size:13px; margin-bottom:2px;">Nouveau message de ${esc(senderName)}</div>
-        <div class="muted" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(previewText)}</div>
+        <div class="muted" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(label)}</div>
       `;
       toast.classList.remove('hidden');
       playNotifSound();
 
       if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
-        new Notification(`Message de ${senderName}`, { body: previewText });
+        new Notification(`Message de ${senderName}`, { body: label });
       }
 
       clearTimeout(window.__toastTimer);
@@ -920,6 +1126,7 @@
     }
 
     const canAdmin = () => !!(perms.can_approve_users || perms.can_manage_roles || perms.can_manage_banned_words || perms.can_view_logs || perms.can_moderate);
+    const canClearRoom = () => !!(me?.role === 'admin' || perms.can_moderate || perms.can_manage_roles);
 
     function showView(name) {
       currentView = name;
@@ -945,7 +1152,6 @@
       ) || null;
     }
 
-    // Contacts visibles dans la liste DM : uniquement ceux acceptés ou demandés (en attente / accepté)
     function getAllowedDmContacts() {
       if (!session) return [];
       const activeIds = new Set();
@@ -1001,8 +1207,6 @@
       members = data || [];
 
       const approvedVisible = members.filter(m => m.status === 'approved' && !m.is_banned);
-      document.getElementById('members-count').textContent = approvedVisible.length;
-
       const sortedApproved = [...approvedVisible].sort((a, b) => {
         const oa = isUserOnline(a.id) ? 0 : 1;
         const ob = isUserOnline(b.id) ? 0 : 1;
@@ -1119,7 +1323,7 @@
       if (typeof content !== 'string' || !content.startsWith('[ANNONCE]')) return null;
       const body = content.replace(/^\[ANNONCE\]\s*/, '');
       let kind = 'info';
-      if (/banni|ban/i.test(body)) kind = 'ban';
+      if (/banni|ban|supprimé|vidé/i.test(body)) kind = 'ban';
       else if (/rejoint|approuvé|accepté/i.test(body)) kind = 'join';
       return { body, kind };
     }
@@ -1145,6 +1349,34 @@
       if (me?.status === 'approved' && !me?.is_banned) {
         await loadChat(true);
       }
+    }
+
+    async function purgeAllRoomMessages(skipConfirm = false) {
+      if (!session) return;
+      if (!canClearRoom()) {
+        return setNotice('Seuls les administrateurs ou modérateurs peuvent vider le salon.', true);
+      }
+      if (!skipConfirm) {
+        const ok = confirm('Supprimer TOUS les messages du salon # général ? Cette action est irréversible.');
+        if (!ok) return;
+      }
+
+      const { error } = await supabase
+        .from('chat_messages')
+        .delete()
+        .not('id', 'is', null);
+
+      if (error) {
+        return setNotice('Erreur suppression salon : ' + error.message, true);
+      }
+
+      window.__localAnnouncements = [];
+      const feed = document.getElementById('chat-feed');
+      if (feed) delete feed.dataset.lastChatSig;
+
+      await postSystemAnnouncement(`Tous les messages du salon ont été supprimés par ${me?.username || 'un administrateur'}.`);
+      setNotice('Tous les messages du salon ont été supprimés.');
+      await loadChat(true);
     }
 
     async function loadChat(forceScroll = false) {
@@ -1197,7 +1429,8 @@
         }
         const p = msg.profiles || members.find(m => m.id === msg.author_id) || null;
         const col = /^#[0-9a-fA-F]{6}$/.test(p?.profile_color || '') ? p.profile_color : '#eceff4';
-        const canDel = session && (session.user.id === msg.author_id || perms.can_moderate);
+        const canDel = session && (session.user.id === msg.author_id || perms.can_moderate || me?.role === 'admin');
+        const decoded = decodeMessagePayload(msg.content);
         return `
           <div class="chat-line">
             <img class="avatar-img" src="${esc(p?.avatar_url || FALLBACK_AVATAR)}" alt="" style="cursor:pointer;" data-mid="${msg.author_id}" />
@@ -1207,12 +1440,15 @@
                 <span class="tag">${esc(p?.role || '')}</span>
                 <span class="muted">${timeStr}</span>
               </div>
-              <div style="margin-top:2px; white-space:pre-wrap; word-break:break-word;">${esc(msg.content)}</div>
+              ${decoded.text ? `<div style="margin-top:2px; white-space:pre-wrap; word-break:break-word;">${esc(decoded.text)}</div>` : ''}
+              ${renderAttachmentHtml(decoded.attachment)}
             </div>
             ${canDel ? `<button class="danger sm msg-actions del-chat-btn" data-id="${msg.id}">Suppr.</button>` : ''}
           </div>
         `;
       }).join('');
+
+      bindLightboxTriggers(feed);
 
       if (forceScroll || isNearBottom || !feed.dataset.hadInitialScroll) {
         feed.scrollTop = feed.scrollHeight;
@@ -1304,7 +1540,6 @@
 
       const rel = getDmRelation(selectedDmPeer.id);
 
-      // Cas 1 : Pas encore de demande -> envoyer une demande (avec message optionnel ou bouton direct)
       if (!rel) {
         banner.classList.remove('hidden');
         banner.innerHTML = `
@@ -1323,7 +1558,6 @@
         return;
       }
 
-      // Cas 2 : Demande en attente
       if (rel.status === 'pending') {
         if (rel.recipient_id === session.user.id) {
           banner.classList.remove('hidden');
@@ -1348,14 +1582,14 @@
             }
             setNotice('Demande de DM acceptée.');
             await loadDmRequests();
-      if (session) {
-        const { data: existingDms } = await supabase
-          .from('direct_messages')
-          .select('id')
-          .eq('recipient_id', session.user.id)
-          .limit(50);
-        window.__seenDmIds = new Set((existingDms || []).map(x => x.id));
-      }
+            if (session) {
+              const { data: existingDms } = await supabase
+                .from('direct_messages')
+                .select('id')
+                .eq('recipient_id', session.user.id)
+                .limit(50);
+              window.__seenDmIds = new Set((existingDms || []).map(x => x.id));
+            }
             await loadDmThread(true);
           });
 
@@ -1381,7 +1615,6 @@
         return;
       }
 
-      // Cas 3 : Demande refusée
       if (rel.status === 'rejected') {
         banner.classList.remove('hidden');
         if (rel.recipient_id === session.user.id) {
@@ -1405,7 +1638,6 @@
         return;
       }
 
-      // Cas 4 : Accepté -> discussion libre
       banner.classList.add('hidden');
       composerWrap.classList.remove('hidden');
       input.disabled = false;
@@ -1479,13 +1711,16 @@
       thread.dataset.lastSig = sig;
       thread.innerHTML = (data || []).map(m => {
         const mine = m.sender_id === session.user.id;
+        const decoded = decodeMessagePayload(m.content);
         return `
           <div class="dm-bubble ${mine ? 'mine' : ''}">
             <div class="muted">${mine ? 'Moi' : esc(selectedDmPeer.username)} · ${new Date(m.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
-            <div style="margin-top:2px; white-space:pre-wrap;">${esc(m.content)}</div>
+            ${decoded.text ? `<div style="margin-top:2px; white-space:pre-wrap; word-break:break-word;">${esc(decoded.text)}</div>` : ''}
+            ${renderAttachmentHtml(decoded.attachment)}
           </div>
         `;
       }).join('') || '<div class="muted">Début de la conversation.</div>';
+      bindLightboxTriggers(thread);
       thread.scrollTop = thread.scrollHeight;
     }
 
@@ -1784,7 +2019,7 @@
       if (realtimeChannel) supabase.removeChannel(realtimeChannel);
       if (window.__pollInterval) clearInterval(window.__pollInterval);
       realtimeChannel = supabase
-        .channel('forum-messages-v15-' + Date.now())
+        .channel('forum-messages-v16-' + Date.now())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, async () => {
           if (me?.status === 'approved' && !me?.is_banned) await loadChat(true);
         })
@@ -1855,7 +2090,6 @@
           }
         });
 
-      // Synchronisation rapide et continue pour salon général, DM, demandes et membres
       window.__pollInterval = setInterval(() => {
         syncAllMessagesNow(false).catch(() => {});
       }, 1200);
@@ -1876,6 +2110,57 @@
       }
     }
 
+    function clearAutoLoginTimers() {
+      if (autoLoginTimer) {
+        clearTimeout(autoLoginTimer);
+        autoLoginTimer = null;
+      }
+      if (autoLoginInterval) {
+        clearInterval(autoLoginInterval);
+        autoLoginInterval = null;
+      }
+      document.getElementById('auto-login-bar')?.classList.add('hidden');
+    }
+
+    function scheduleAutoLoginCheck() {
+      if (session || isLoggingIn || isSigningUp || autoLoginCancelled) {
+        clearAutoLoginTimers();
+        return;
+      }
+      const email = (document.getElementById('auth-email')?.value || '').trim();
+      const password = document.getElementById('auth-password')?.value || '';
+      const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+      if (!validEmail || !password) {
+        clearAutoLoginTimers();
+        return;
+      }
+
+      if (autoLoginTimer) return; // compte à rebours déjà en cours
+
+      let remaining = 3;
+      const bar = document.getElementById('auto-login-bar');
+      const txt = document.getElementById('auto-login-text');
+      if (bar && txt) {
+        txt.textContent = `Champs remplis : connexion automatique dans ${remaining}s...`;
+        bar.classList.remove('hidden');
+      }
+
+      autoLoginInterval = setInterval(() => {
+        remaining -= 1;
+        if (remaining > 0 && txt) {
+          txt.textContent = `Champs remplis : connexion automatique dans ${remaining}s...`;
+        }
+      }, 1000);
+
+      autoLoginTimer = setTimeout(() => {
+        clearAutoLoginTimers();
+        if (!session && !isLoggingIn && !autoLoginCancelled) {
+          handleLoginSubmit();
+        }
+      }, 3000);
+    }
+
     async function refreshSession(keepView = false) {
       const { data } = await supabase.auth.getSession();
       session = data.session;
@@ -1887,21 +2172,23 @@
         onlineUserIds = new Set();
         document.getElementById('guest-screen').classList.remove('hidden');
         document.getElementById('app-screen').classList.add('hidden');
+        scheduleAutoLoginCheck();
         return;
       }
 
+      clearAutoLoginTimers();
       document.getElementById('guest-screen').classList.add('hidden');
       document.getElementById('app-screen').classList.remove('hidden');
 
       if (!roles || roles.length === 0) {
         document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) syncAllMessagesNow(true).catch(() => {});
-    });
-    window.addEventListener('focus', () => {
-      syncAllMessagesNow(true).catch(() => {});
-    });
+          if (!document.hidden) syncAllMessagesNow(true).catch(() => {});
+        });
+        window.addEventListener('focus', () => {
+          syncAllMessagesNow(true).catch(() => {});
+        });
 
-    await loadRoles();
+        await loadRoles();
       }
 
       const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
@@ -1913,6 +2200,7 @@
       perms = allowed ? rDef : {};
 
       document.getElementById('btn-toggle-admin').classList.toggle('hidden', !allowed || !canAdmin());
+      document.getElementById('btn-clear-chat-admin').classList.toggle('hidden', !allowed || !canClearRoom());
 
       const blocked = document.getElementById('blocked-panel');
       if (!allowed) {
@@ -1949,13 +2237,86 @@
     }
 
     async function uploadAsset(file, kind) {
-      const ext = (file.name.split('.').pop() || 'png').replace(/[^a-zA-Z0-9]/g, '');
-      const path = `${session.user.id}/${kind}_${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+      if (!file) return null;
+      if (file.size > MAX_FILE_BYTES) {
+        throw new Error(`Fichier trop volumineux (max ${formatBytes(MAX_FILE_BYTES)}).`);
+      }
+      const ext = (file.name.split('.').pop() || 'bin').replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'bin';
+      const safeBase = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 32) || 'file';
+      const path = `${session.user.id}/${kind}_${Date.now()}_${safeBase}.${ext}`;
+      const { error } = await supabase.storage.from('avatars').upload(path, file, {
+        upsert: true,
+        contentType: file.type || 'application/octet-stream'
+      });
       if (error) throw error;
       const { data } = supabase.storage.from('avatars').getPublicUrl(path);
       return data.publicUrl;
     }
+
+    // PIÈCES JOINTES CHAT & DM
+    function clearPendingChatAttachment() {
+      if (pendingChatFile?.previewUrl) URL.revokeObjectURL(pendingChatFile.previewUrl);
+      pendingChatFile = null;
+      document.getElementById('chat-file-input').value = '';
+      renderAttachmentPreview(document.getElementById('chat-attachment-preview'), null, clearPendingChatAttachment);
+    }
+
+    function clearPendingDmAttachment() {
+      if (pendingDmFile?.previewUrl) URL.revokeObjectURL(pendingDmFile.previewUrl);
+      pendingDmFile = null;
+      document.getElementById('dm-file-input').value = '';
+      renderAttachmentPreview(document.getElementById('dm-attachment-preview'), null, clearPendingDmAttachment);
+    }
+
+    document.getElementById('btn-attach-chat').addEventListener('click', () => {
+      document.getElementById('chat-file-input').click();
+    });
+    document.getElementById('chat-file-input').addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > MAX_FILE_BYTES) {
+        setNotice(`Fichier trop volumineux (max ${formatBytes(MAX_FILE_BYTES)}).`, true);
+        e.target.value = '';
+        return;
+      }
+      if (pendingChatFile?.previewUrl) URL.revokeObjectURL(pendingChatFile.previewUrl);
+      pendingChatFile = {
+        file,
+        previewUrl: isImageFile(file) ? URL.createObjectURL(file) : null
+      };
+      renderAttachmentPreview(document.getElementById('chat-attachment-preview'), pendingChatFile, clearPendingChatAttachment);
+    });
+
+    document.getElementById('btn-attach-dm').addEventListener('click', () => {
+      document.getElementById('dm-file-input').click();
+    });
+    document.getElementById('dm-file-input').addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > MAX_FILE_BYTES) {
+        setNotice(`Fichier trop volumineux (max ${formatBytes(MAX_FILE_BYTES)}).`, true);
+        e.target.value = '';
+        return;
+      }
+      if (pendingDmFile?.previewUrl) URL.revokeObjectURL(pendingDmFile.previewUrl);
+      pendingDmFile = {
+        file,
+        previewUrl: isImageFile(file) ? URL.createObjectURL(file) : null
+      };
+      renderAttachmentPreview(document.getElementById('dm-attachment-preview'), pendingDmFile, clearPendingDmAttachment);
+    });
+
+    // LIGHTBOX
+    document.getElementById('btn-close-lightbox').addEventListener('click', () => {
+      document.getElementById('lightbox-modal').classList.add('hidden');
+      document.getElementById('lightbox-img').src = '';
+    });
+    document.getElementById('lightbox-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'lightbox-modal') {
+        document.getElementById('lightbox-modal').classList.add('hidden');
+        document.getElementById('lightbox-img').src = '';
+      }
+    });
 
     function closeMobileDrawer() {
       document.getElementById('mobile-drawer')?.classList.add('hidden');
@@ -1984,6 +2345,7 @@
     let isSigningUp = false;
     async function handleSignupSubmit() {
       if (isSigningUp) return;
+      clearAutoLoginTimers();
       const btn = document.getElementById('btn-signup');
       const username = document.getElementById('auth-username').value.trim();
       const email = document.getElementById('auth-email').value.trim();
@@ -2026,6 +2388,7 @@
       const now = Date.now();
       if (isLoggingIn || now - lastLoginAttemptAt < 120) return;
       lastLoginAttemptAt = now;
+      clearAutoLoginTimers();
 
       const btn = document.getElementById('btn-login');
       const emailEl = document.getElementById('auth-email');
@@ -2053,6 +2416,7 @@
         );
         const { data: authData, error } = await Promise.race([loginPromise, timeoutPromise]);
         if (error) {
+          autoLoginCancelled = true;
           const msg = error.message === 'Invalid login credentials'
             ? 'E-mail ou mot de passe incorrect.'
             : error.message;
@@ -2060,12 +2424,14 @@
           return;
         }
         if (!authData?.session) {
+          autoLoginCancelled = true;
           setNotice('Connexion refusée ou compte non confirmé.', true);
           return;
         }
         setNotice('');
         await refreshSession();
       } catch (err) {
+        autoLoginCancelled = true;
         setNotice(err?.message || 'Erreur réseau lors de la connexion.', true);
       } finally {
         isLoggingIn = false;
@@ -2074,6 +2440,20 @@
           btn.textContent = 'Se connecter';
         }
       }
+    }
+
+    document.getElementById('btn-cancel-autologin')?.addEventListener('click', () => {
+      autoLoginCancelled = true;
+      clearAutoLoginTimers();
+      setNotice('Connexion automatique annulée.');
+    });
+
+    for (const fid of ['auth-email', 'auth-password']) {
+      document.getElementById(fid)?.addEventListener('input', () => {
+        autoLoginCancelled = false;
+        clearAutoLoginTimers();
+        scheduleAutoLoginCheck();
+      });
     }
 
     const authFormEl = document.getElementById('auth-form');
@@ -2108,6 +2488,7 @@
     }
 
     document.getElementById('btn-logout').addEventListener('click', async () => {
+      autoLoginCancelled = false;
       await supabase.auth.signOut();
       await refreshSession();
     });
@@ -2145,12 +2526,51 @@
       await loadAdmin();
     });
 
+    document.getElementById('btn-clear-chat-admin').addEventListener('click', async () => {
+      await purgeAllRoomMessages(false);
+    });
+
     async function sendChatMessage() {
       const inp = document.getElementById('chat-input');
+      const sendBtn = document.getElementById('btn-send-chat');
       const content = inp.value.trim();
-      if (!content || !session) return;
+      if (!session) return;
+
+      // Commande admin pour supprimer tous les messages du salon
+      if (/^\/(clear|purge|supptout|suppall|deleteall)\b/i.test(content)) {
+        inp.value = '';
+        await purgeAllRoomMessages(false);
+        return;
+      }
+
+      if (!content && !pendingChatFile) return;
+
+      let attachmentPayload = null;
+      if (pendingChatFile) {
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Envoi...';
+        try {
+          const url = await uploadAsset(pendingChatFile.file, 'chat');
+          attachmentPayload = {
+            url,
+            name: pendingChatFile.file.name,
+            mime: pendingChatFile.file.type || '',
+            size: pendingChatFile.file.size || 0
+          };
+        } catch (err) {
+          sendBtn.disabled = false;
+          sendBtn.textContent = 'Envoyer';
+          return setNotice('Échec envoi fichier : ' + err.message, true);
+        }
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Envoyer';
+      }
+
+      const payloadContent = encodeMessagePayload(content, attachmentPayload);
       inp.value = '';
-      const { error } = await supabase.from('chat_messages').insert({ author_id: session.user.id, content });
+      clearPendingChatAttachment();
+
+      const { error } = await supabase.from('chat_messages').insert({ author_id: session.user.id, content: payloadContent });
       if (error) return setNotice(error.message, true);
       await loadChat(true);
     }
@@ -2194,12 +2614,12 @@
 
     async function sendDm() {
       const inp = document.getElementById('dm-input');
+      const sendBtn = document.getElementById('btn-send-dm');
       const content = inp.value.trim();
       if (!selectedDmPeer || !session) return;
 
       const rel = getDmRelation(selectedDmPeer.id);
 
-      // Si pas encore de demande, on crée la demande (avec message optionnel)
       if (!rel) {
         inp.value = '';
         await createDmRequest(selectedDmPeer.id, content);
@@ -2210,12 +2630,37 @@
         return setNotice('La demande de DM doit être acceptée avant d’envoyer des messages.', true);
       }
 
-      if (!content) return;
+      if (!content && !pendingDmFile) return;
+
+      let attachmentPayload = null;
+      if (pendingDmFile) {
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Envoi...';
+        try {
+          const url = await uploadAsset(pendingDmFile.file, 'dm');
+          attachmentPayload = {
+            url,
+            name: pendingDmFile.file.name,
+            mime: pendingDmFile.file.type || '',
+            size: pendingDmFile.file.size || 0
+          };
+        } catch (err) {
+          sendBtn.disabled = false;
+          sendBtn.textContent = 'Envoyer';
+          return setNotice('Échec envoi fichier : ' + err.message, true);
+        }
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Envoyer';
+      }
+
+      const payloadContent = encodeMessagePayload(content, attachmentPayload);
       inp.value = '';
+      clearPendingDmAttachment();
+
       const { error } = await supabase.from('direct_messages').insert({
         sender_id: session.user.id,
         recipient_id: selectedDmPeer.id,
-        content
+        content: payloadContent
       });
       if (error) return setNotice(error.message, true);
       await loadDmThread(true);
