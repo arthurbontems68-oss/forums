@@ -1,0 +1,2479 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forum — # général</title>
+  <style>
+    :root {
+      --bg: #111318;
+      --sidebar: #171a21;
+      --panel: #1e222b;
+      --panel-2: #252a36;
+      --text: #eceff4;
+      --muted: #9aa2b1;
+      --accent: #5865f2;
+      --accent-hover: #4752c4;
+      --ok: #2da44e;
+      --warn: #d29922;
+      --danger: #da3633;
+      --border: #2c313c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    /* AUTH */
+    .auth-wrap {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 390px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+    }
+    .auth-card h1 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+    .auth-card input, .auth-card button { width: 100%; margin-top: 10px; }
+
+    /* APP SHELL */
+    .app-shell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    .topbar {
+      height: 48px;
+      background: var(--sidebar);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .topbar-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; color: #7ee787;
+      background: rgba(45, 164, 78, 0.14);
+      border: 1px solid rgba(45, 164, 78, 0.35);
+      padding: 2px 7px; border-radius: 4px; flex-shrink: 0;
+    }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #3fb950; }
+
+    /* BADGE NOTIFICATION */
+    .notif-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 5px;
+    }
+    .dm-sender-alert {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(218, 54, 51, 0.2);
+      border: 1px solid rgba(248, 81, 73, 0.65);
+      color: #ff7b72;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .member-row.has-unread {
+      background: rgba(218, 54, 51, 0.08);
+      border: 1px solid rgba(248, 81, 73, 0.35);
+    }
+
+    /* TOAST NOTIFICATION */
+    .toast-notif {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      z-index: 100;
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px 14px;
+      max-width: 330px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+      cursor: pointer;
+    }
+
+    .main-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 220px 1fr 230px;
+      min-height: 0;
+    }
+    .mobile-subbar {
+      display: none;
+    }
+    .mobile-drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      z-index: 45;
+    }
+    .mobile-drawer {
+      position: fixed;
+      top: 48px;
+      right: 0;
+      bottom: 0;
+      width: min(300px, 88vw);
+      background: var(--sidebar);
+      border-left: 1px solid var(--border);
+      z-index: 46;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    @media (max-width: 900px) {
+      .main-body {
+        grid-template-columns: 1fr;
+        min-height: 0;
+        flex: 1;
+        overflow: hidden;
+      }
+      .center-col {
+        min-height: 0;
+        flex: 1;
+      }
+      .left-col, .right-col { display: none; }
+      .app-shell {
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow: hidden;
+      }
+      .topbar {
+        height: auto;
+        min-height: 48px;
+        padding: 8px 10px;
+        flex-wrap: wrap;
+      }
+      .topbar-right {
+        width: 100%;
+        justify-content: flex-start;
+      }
+      .mobile-subbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 12px;
+        background: var(--sidebar);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .view-panel {
+        padding: 10px;
+      }
+      .box {
+        padding: 12px;
+        margin-bottom: 10px;
+      }
+      .chat-input-bar {
+        padding: 8px 10px 12px;
+      }
+      .dm-box {
+        padding-bottom: 10px;
+      }
+      .dm-layout {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .dm-layout > div:first-child {
+        border-right: none !important;
+        border-bottom: 1px solid var(--border);
+        padding-right: 0 !important;
+        padding-bottom: 8px;
+        max-height: 150px;
+      }
+      .dm-thread {
+        min-height: 120px;
+      }
+      .dm-bubble {
+        max-width: 92%;
+      }
+      .toast-notif {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        max-width: none;
+      }
+      table {
+        font-size: 12px;
+      }
+      th, td {
+        padding: 6px 5px;
+      }
+    }
+
+    /* LEFT SIDEBAR */
+    .left-col {
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      padding: 0 8px 6px;
+    }
+    .channel-active-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 5px;
+      background: var(--panel-2); color: var(--text); font-weight: 500;
+    }
+    .me-mini {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer;
+    }
+
+    /* CENTER STAGE */
+    .center-col {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: var(--bg);
+    }
+    .view-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .chat-feed {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .chat-line {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 7px 10px;
+      border-radius: 5px;
+    }
+    .chat-line:hover { background: rgba(255, 255, 255, 0.025); }
+    .system-announcement {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      margin: 4px 0;
+      border-radius: 5px;
+      background: rgba(88, 101, 242, 0.09);
+      border-left: 3px solid var(--accent);
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+    .system-announcement.ban {
+      background: rgba(218, 54, 51, 0.1);
+      border-left-color: var(--danger);
+      color: #ff9b95;
+    }
+    .system-announcement.join {
+      background: rgba(45, 164, 78, 0.1);
+      border-left-color: var(--ok);
+      color: #8ce99a;
+    }
+    .chat-line:hover .msg-actions { opacity: 1; }
+    .msg-actions { opacity: 0; transition: opacity 0.12s; margin-left: auto; }
+    .chat-input-bar {
+      padding: 12px 16px 16px;
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+    .chat-input-box {
+      display: flex; gap: 8px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+    }
+    .chat-input-box input {
+      flex: 1; background: transparent; border: none; padding: 6px 8px;
+    }
+    .chat-input-box input:focus { outline: none; }
+
+    /* RIGHT MEMBERS LIST */
+    .right-col {
+      background: var(--sidebar);
+      border-left: 1px solid var(--border);
+      padding: 12px 8px;
+      overflow-y: auto;
+    }
+    .member-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 8px; border-radius: 5px; cursor: pointer;
+    }
+    .member-row:hover { background: var(--panel-2); }
+
+    /* AVATAR & BANNER */
+    .avatar-wrap {
+      position: relative;
+      display: inline-flex;
+      flex-shrink: 0;
+    }
+    .presence-dot {
+      position: absolute;
+      right: -1px;
+      bottom: -1px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--sidebar);
+      background: #6e7681;
+    }
+    .presence-dot.online {
+      background: #3fb950;
+    }
+    .presence-dot.offline {
+      background: #6e7681;
+    }
+    .presence-dot.lg {
+      width: 15px;
+      height: 15px;
+      right: 1px;
+      bottom: 1px;
+      border-width: 2.5px;
+      border-color: var(--panel);
+    }
+    .avatar-img {
+      width: 34px; height: 34px; border-radius: 50%;
+      object-fit: cover; background: var(--panel-2);
+      border: 1px solid var(--border); flex-shrink: 0;
+    }
+    .avatar-sm { width: 28px; height: 28px; }
+    .avatar-lg { width: 72px; height: 72px; border: 3px solid var(--panel); }
+    .profile-banner {
+      height: 110px;
+      border-radius: 6px 6px 0 0;
+      background-color: var(--panel-2);
+      background-size: cover;
+      background-position: center;
+      border: 1px solid var(--border);
+      border-bottom: none;
+    }
+
+    /* CARDS, INPUTS, BUTTONS */
+    .box {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    input, textarea, select {
+      font: inherit; font-size: 13px;
+      background: var(--sidebar); color: var(--text);
+      border: 1px solid var(--border); border-radius: 5px;
+      padding: 7px 10px;
+    }
+    input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+    button:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
+    button:active:not(:disabled) {
+      transform: scale(0.98);
+      filter: brightness(0.9);
+    }
+    .tap-pressed {
+      transform: scale(0.98) !important;
+      filter: brightness(0.88) !important;
+    }
+    button {
+      font: inherit; font-size: 13px; font-weight: 500;
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 5px; padding: 7px 12px; cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(88, 101, 242, 0.35);
+      user-select: none;
+    }
+    button:hover:not(:disabled) { background: var(--accent-hover); }
+    button.ghost { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+    button.ghost:hover:not(:disabled) { background: #2f3646; }
+    button.ghost.active { background: rgba(88, 101, 242, 0.2); border-color: var(--accent); color: #fff; }
+    button.ok { background: var(--ok); color: #fff; }
+    button.danger { background: var(--danger); color: #fff; }
+    button.sm { padding: 4px 8px; font-size: 12px; }
+
+    .tag {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 1px 6px; border-radius: 4px;
+      background: var(--panel-2); color: var(--muted); border: 1px solid var(--border);
+      margin-left: 5px;
+    }
+    .tag.pending { color: #e3b341; border-color: rgba(210, 153, 34, 0.4); }
+    .tag.rejected, .tag.banned { color: #f85149; border-color: rgba(218, 54, 51, 0.45); }
+    .muted { color: var(--muted); font-size: 12px; }
+    .hidden { display: none !important; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+    /* MODAL FICHE MEMBRE */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65);
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px; z-index: 50;
+    }
+    .modal-card {
+      width: 100%; max-width: 440px;
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden;
+    }
+
+    /* DM GRID */
+    .dm-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0;
+      min-height: 0;
+      padding-bottom: 14px;
+    }
+    .dm-layout {
+      display: grid;
+      grid-template-columns: 230px 1fr;
+      gap: 14px;
+      flex: 1;
+      min-height: 0;
+    }
+    @media (max-width: 720px) { .dm-layout { grid-template-columns: 1fr; } }
+    .dm-chat-pane {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      flex: 1;
+    }
+    .dm-thread {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 180px;
+      padding-right: 4px;
+      padding-bottom: 8px;
+    }
+    .dm-composer-wrap {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .dm-bubble {
+      padding: 8px 11px; border-radius: 6px; margin-bottom: 6px;
+      background: var(--sidebar); border: 1px solid var(--border); max-width: 82%;
+    }
+    .dm-bubble.mine { margin-left: auto; background: rgba(88, 101, 242, 0.18); border-color: rgba(88, 101, 242, 0.45); }
+    .dm-request-banner {
+      background: rgba(210, 153, 34, 0.12);
+      border: 1px solid rgba(210, 153, 34, 0.45);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+    .notice { color: #79c0ff; font-size: 12px; min-height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .notice.err { color: #f85149; }
+  </style>
+</head>
+<body>
+
+  <!-- ÉCRAN DE CONNEXION OBLIGATOIRE -->
+  <div id="guest-screen" class="auth-wrap">
+    <form id="auth-form" class="auth-card" novalidate>
+      <h1>Forum <span class="tag">v17</span></h1>
+      <div class="muted">Identifie-toi ou crée un compte pour accéder au salon # général.</div>
+      <div id="guest-notice" class="notice" style="margin-top:8px; min-height:22px; white-space:normal; overflow:visible;"></div>
+
+      <input type="text" id="auth-username" placeholder="Pseudo (inscription uniquement)" autocomplete="username" />
+      <input type="email" id="auth-email" placeholder="Adresse e-mail" autocomplete="email" inputmode="email" />
+      <input type="password" id="auth-password" placeholder="Mot de passe" autocomplete="current-password" />
+
+      <button type="button" id="btn-login">Se connecter</button>
+      <button type="button" id="btn-signup" class="ghost">Créer un compte</button>
+    </form>
+  </div>
+
+  <!-- APPLICATION -->
+  <div id="app-screen" class="app-shell hidden">
+    <header class="topbar">
+      <div class="topbar-left">
+        <strong># général</strong>
+        <span class="live-badge"><span class="live-dot"></span>En direct</span>
+        <span id="app-notice" class="notice"></span>
+      </div>
+      <div class="topbar-right">
+        <button id="btn-nav-chat" class="ghost sm active">Salon général</button>
+        <button id="btn-nav-dm" class="ghost sm">Messages (DM)<span id="dm-total-badge" class="notif-badge hidden">0</span></button>
+        <button id="btn-nav-profile" class="ghost sm">Mon profil</button>
+        <button id="btn-toggle-admin" class="sm hidden">Administration</button>
+        <button id="btn-logout" class="ghost sm">Déconnexion</button>
+      </div>
+    </header>
+
+    <div id="mobile-subbar" class="mobile-subbar">
+      <div class="muted">Membres connectés : <strong id="mobile-online-count" style="color:var(--text);">0</strong></div>
+      <button id="btn-mobile-members" class="ghost sm">Voir les membres</button>
+    </div>
+
+    <div id="mobile-drawer-backdrop" class="mobile-drawer-backdrop hidden"></div>
+    <aside id="mobile-drawer" class="mobile-drawer hidden">
+      <div class="row" style="justify-content:space-between;">
+        <div class="section-label" style="padding:0;">Membres (<span id="mobile-drawer-count">0</span>)</div>
+        <button id="btn-close-mobile-drawer" class="ghost sm">Fermer</button>
+      </div>
+      <div id="mobile-members-list"></div>
+    </aside>
+
+    <div class="main-body">
+      <!-- COLONNE GAUCHE -->
+      <aside class="left-col">
+        <div>
+          <div class="section-label">Salon textuel</div>
+          <div class="channel-active-row">
+            <span>#</span>
+            <span>général</span>
+          </div>
+          <div class="muted" style="padding:8px 10px;">Discussions en direct avec les membres approuvés.</div>
+        </div>
+
+        <div id="me-sidebar-card" class="me-mini">
+          <img id="me-mini-avatar" class="avatar-img avatar-sm" src="" alt="" />
+          <div style="min-width:0; flex:1;">
+            <div id="me-mini-name" style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+            <div id="me-mini-role" class="muted"></div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- COLONNE CENTRALE -->
+      <main class="center-col">
+        <!-- BLOQUÉ : EN ATTENTE / REFUSÉ / BANNI -->
+        <div id="blocked-panel" class="view-panel hidden">
+          <div class="box">
+            <h2 id="blocked-title" style="margin:0 0 6px; font-size:16px;"></h2>
+            <div id="blocked-desc" class="muted"></div>
+          </div>
+        </div>
+
+        <!-- SALON GÉNÉRAL (TCHAT STYLE DISCORD) -->
+        <div id="chat-panel" class="hidden" style="display:flex; flex-direction:column; flex:1; min-height:0;">
+          <div id="chat-feed" class="chat-feed" style="padding:14px 16px;"></div>
+          <div class="chat-input-bar">
+            <div class="chat-input-box">
+              <input type="text" id="chat-input" placeholder="Envoyer un message dans # général..." />
+              <button id="btn-send-chat">Envoyer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROFIL PERSO (PP + BANNIÈRE + BIO + COULEUR) -->
+        <div id="profile-panel" class="view-panel hidden">
+          <div class="box" style="padding:0; overflow:hidden;">
+            <div id="preview-banner" class="profile-banner"></div>
+            <div style="padding:0 16px 16px; margin-top:-36px;">
+              <img id="preview-avatar" class="avatar-img avatar-lg" src="" alt="" />
+              <div style="margin-top:8px;">
+                <strong id="preview-username" style="font-size:16px;"></strong>
+                <span id="preview-role-tag" class="tag"></span>
+              </div>
+              <div id="preview-bio" class="muted" style="margin-top:4px;"></div>
+            </div>
+          </div>
+
+          <div class="box">
+            <h2 style="margin:0 0 12px; font-size:15px;">Modifier mon profil</h2>
+            <div class="row" style="margin-bottom:10px;">
+              <label class="muted">Pseudo<br/>
+                <input type="text" id="prof-username" style="margin-top:4px;" />
+              </label>
+              <label class="muted">Couleur rôle<br/>
+                <input type="color" id="prof-color" value="#5865f2" style="margin-top:4px; height:32px; width:56px; padding:2px;" />
+              </label>
+            </div>
+
+            <div style="margin-bottom:10px;">
+              <label class="muted" style="display:block; margin-bottom:4px;">Photo de profil (URL ou fichier image)</label>
+              <div class="row">
+                <input type="text" id="prof-avatar-url" placeholder="https://... (optionnel)" style="flex:1; min-width:200px;" />
+                <input type="file" id="prof-avatar-file" accept="image/*" />
+              </div>
+            </div>
+
+            <div style="margin-bottom:10px;">
+              <label class="muted" style="display:block; margin-bottom:4px;">Bannière de profil (URL ou fichier image)</label>
+              <div class="row">
+                <input type="text" id="prof-banner-url" placeholder="https://... (optionnel)" style="flex:1; min-width:200px;" />
+                <input type="file" id="prof-banner-file" accept="image/*" />
+              </div>
+            </div>
+
+            <div style="margin-bottom:12px;">
+              <label class="muted" style="display:block; margin-bottom:4px;">Biographie</label>
+              <textarea id="prof-bio" rows="3" placeholder="À propos de toi..." style="width:100%;"></textarea>
+            </div>
+
+            <button id="btn-save-profile">Enregistrer</button>
+          </div>
+        </div>
+
+        <!-- MESSAGES PRIVÉS (DM) -->
+        <div id="dm-panel" class="view-panel hidden">
+          <div class="box dm-box">
+            <h2 style="margin:0 0 12px; font-size:15px;">Messages privés</h2>
+            <div class="dm-layout">
+              <div style="border-right:1px solid var(--border); padding-right:10px; overflow-y:auto;">
+                <div id="dm-requests-section" class="hidden" style="margin-bottom:12px;">
+                  <div class="section-label" style="color:#e3b341;">Demandes reçues</div>
+                  <div id="dm-requests-list"></div>
+                </div>
+                <div class="section-label">Amis & discussions</div>
+                <div id="dm-members-list"></div>
+              </div>
+              <div class="dm-chat-pane">
+                <div id="dm-peer-header" style="font-weight:600; padding-bottom:8px; border-bottom:1px solid var(--border); margin-bottom:10px;">
+                  Sélectionne un contact
+                </div>
+                <div id="dm-request-banner" class="dm-request-banner hidden"></div>
+                <div id="dm-thread" class="dm-thread"></div>
+                <div id="dm-composer-wrap" class="dm-composer-wrap hidden">
+                  <div id="dm-composer" class="row">
+                    <input type="text" id="dm-input" placeholder="Écrire un message privé..." style="flex:1;" />
+                    <button id="btn-send-dm">Envoyer</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ADMINISTRATION -->
+        <div id="admin-panel" class="view-panel hidden">
+          <div class="box">
+            <h2 style="margin:0 0 10px; font-size:15px;">Administration</h2>
+            <div class="row" style="margin-bottom:14px;">
+              <button class="ghost sm admin-tab-btn active" data-atab="atab-pending" id="atab-btn-pending">En attente<span id="admin-pending-badge" class="notif-badge hidden">0</span></button>
+              <button class="ghost sm admin-tab-btn" data-atab="atab-users" id="atab-btn-users">Tous les membres</button>
+              <button class="ghost sm admin-tab-btn" data-atab="atab-roles" id="atab-btn-roles">Rôles</button>
+              <button class="ghost sm admin-tab-btn" data-atab="atab-words" id="atab-btn-words">Mots bannis</button>
+              <button class="ghost sm admin-tab-btn" data-atab="atab-logs" id="atab-btn-logs">Logs</button>
+            </div>
+
+            <div id="atab-pending" class="admin-sec">
+              <div class="muted" style="margin-bottom:8px;">Membres en attente d’acceptation. Dès qu’un membre est accepté ou refusé, il disparaît de cette liste.</div>
+              <div style="overflow-x:auto;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Membre</th>
+                      <th>Statut</th>
+                      <th>Décision</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-pending-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div id="atab-users" class="admin-sec hidden">
+              <div class="muted" style="margin-bottom:8px;">Gestion complète de tous les membres (statut, bannissement, rôle).</div>
+              <div style="overflow-x:auto;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Membre</th>
+                      <th>Statut</th>
+                      <th>Ban</th>
+                      <th>Validation</th>
+                      <th>Rôle</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-users-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div id="atab-roles" class="admin-sec hidden">
+              <div class="row" style="margin-bottom:12px;">
+                <input type="text" id="role-name" placeholder="Nom du rôle (ex: mod)" />
+                <label class="muted"><input type="checkbox" id="perm-moderate" /> Modérer</label>
+                <label class="muted"><input type="checkbox" id="perm-approve" /> Valider/Ban</label>
+                <label class="muted"><input type="checkbox" id="perm-roles" /> Gérer rôles</label>
+                <label class="muted"><input type="checkbox" id="perm-words" /> Mots bannis</label>
+                <label class="muted"><input type="checkbox" id="perm-logs" /> Logs</label>
+                <button id="btn-add-role" class="sm">Créer</button>
+              </div>
+              <div id="roles-list" class="muted"></div>
+            </div>
+
+            <div id="atab-words" class="admin-sec hidden">
+              <div class="row" style="margin-bottom:10px;">
+                <input type="text" id="banned-word-input" placeholder="Mot interdit..." />
+                <button id="btn-add-word" class="sm">Ajouter</button>
+              </div>
+              <div id="banned-words-list" class="row"></div>
+            </div>
+
+            <div id="atab-logs" class="admin-sec hidden">
+              <table>
+                <thead>
+                  <tr><th>Date</th><th>Action</th><th>Détails</th></tr>
+                </thead>
+                <tbody id="admin-logs-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- COLONNE DROITE : MEMBRES -->
+      <aside class="right-col">
+        <div class="section-label">Membres (<span id="members-count">0</span>)</div>
+        <div id="right-members-list"></div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION FLOTTANTE -->
+  <div id="dm-toast" class="toast-notif hidden"></div>
+
+  <!-- MODALE FICHE MEMBRE AU CLIC -->
+  <div id="member-modal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div id="modal-banner" class="profile-banner"></div>
+      <div style="padding:0 16px 16px; margin-top:-36px;">
+        <div class="row" style="justify-content:space-between; align-items:flex-end;">
+          <img id="modal-avatar" class="avatar-img avatar-lg" src="" alt="" />
+          <button id="btn-close-modal" class="ghost sm">Fermer</button>
+        </div>
+
+        <div style="margin-top:8px;">
+          <strong id="modal-username" style="font-size:16px;"></strong>
+          <span id="modal-presence-status" class="muted" style="margin-left:6px; font-weight:600;"></span>
+          <span id="modal-role-tag" class="tag"></span>
+          <span id="modal-ban-tag" class="tag banned hidden">Banni</span>
+        </div>
+
+        <div id="modal-bio" class="muted" style="margin-top:6px;"></div>
+        <div id="modal-ban-reason" class="muted" style="margin-top:4px; color:#f85149;"></div>
+
+        <div class="row" style="margin-top:14px;">
+          <button id="modal-dm-btn" class="sm"></button>
+          <button id="modal-ban-btn" class="danger sm hidden">Bannir</button>
+          <button id="modal-unban-btn" class="ok sm hidden">Débannir</button>
+        </div>
+
+        <div id="modal-admin-controls" class="hidden" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+          <div class="muted" style="margin-bottom:6px;">Gestion administrateur</div>
+          <div class="row">
+            <select id="modal-role-select"></select>
+            <button id="modal-approve-btn" class="ok sm">Approuver</button>
+            <button id="modal-reject-btn" class="ghost sm">Refuser</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const SUPABASE_URL = 'https://sdgkdiybppvsclgakdem.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_eSAcsSsTMF9p5jBUa0tIkA_XnsH3nxP';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const FALLBACK_AVATAR = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="#252a36"/><circle cx="40" cy="32" r="14" fill="#6e7681"/><ellipse cx="40" cy="66" rx="24" ry="16" fill="#6e7681"/></svg>`
+    );
+
+    let session = null;
+    let me = null;
+    let perms = {};
+    let roles = [];
+    let members = [];
+    let dmRequests = [];
+    let unreadByPeer = {}; // { peerId: count }
+    let selectedDmPeer = null;
+    let inspectedMember = null;
+    let currentView = 'chat';
+    let realtimeChannel = null;
+    let presenceChannel = null;
+    let onlineUserIds = new Set();
+    let toastPeerId = null;
+
+    function isUserOnline(userId) {
+      if (!userId) return false;
+      if (session && userId === session.user.id) return true;
+      return onlineUserIds.has(userId);
+    }
+
+    function renderAvatarWithPresence(avatarUrl, userId, sizeClass = 'avatar-sm', isLarge = false) {
+      const online = isUserOnline(userId);
+      const dotClass = `presence-dot ${online ? 'online' : 'offline'} ${isLarge ? 'lg' : ''}`;
+      const title = online ? 'En ligne' : 'Hors ligne';
+      return `
+        <span class="avatar-wrap" title="${title}">
+          <img class="avatar-img ${sizeClass}" src="${esc(avatarUrl || FALLBACK_AVATAR)}" alt="" />
+          <span class="${dotClass}"></span>
+        </span>
+      `;
+    }
+
+    function bindUniversalTap(el, handler) {
+      if (!el || typeof handler !== 'function') return;
+      if (el.dataset.tapBound === '1') return;
+      el.dataset.tapBound = '1';
+
+      let lastFireAt = 0;
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchMoved = false;
+
+      const invoke = (ev) => {
+        if (el.disabled) return;
+        const now = Date.now();
+        if (now - lastFireAt < 220) return;
+        lastFireAt = now;
+        try {
+          const res = handler(ev);
+          if (res && typeof res.catch === 'function') {
+            res.catch((err) => setNotice(err && err.message ? err.message : 'Erreur action', true));
+          }
+        } catch (err) {
+          setNotice(err && err.message ? err.message : 'Erreur action', true);
+        }
+      };
+
+      el.addEventListener('touchstart', (ev) => {
+        if (el.disabled) return;
+        const t = ev.touches && ev.touches[0];
+        touchStartX = t ? t.clientX : 0;
+        touchStartY = t ? t.clientY : 0;
+        touchMoved = false;
+        el.classList.add('tap-pressed');
+      }, { passive: true });
+
+      el.addEventListener('touchmove', (ev) => {
+        const t = ev.touches && ev.touches[0];
+        if (!t) return;
+        if (Math.abs(t.clientX - touchStartX) > 12 || Math.abs(t.clientY - touchStartY) > 12) {
+          touchMoved = true;
+          el.classList.remove('tap-pressed');
+        }
+      }, { passive: true });
+
+      el.addEventListener('touchend', (ev) => {
+        el.classList.remove('tap-pressed');
+        if (touchMoved || el.disabled) return;
+        if (ev.cancelable) ev.preventDefault();
+        invoke(ev);
+      }, { passive: false });
+
+      el.addEventListener('touchcancel', () => {
+        el.classList.remove('tap-pressed');
+      }, { passive: true });
+
+      el.addEventListener('click', (ev) => {
+        if (el.disabled) return;
+        if (ev.cancelable) ev.preventDefault();
+        invoke(ev);
+      });
+    }
+
+    function wireAllButtonsForOldTablets() {
+      const staticMap = {
+        'btn-login': (e) => {
+          if (document.activeElement && document.activeElement.id !== 'btn-login' && typeof document.activeElement.blur === 'function') {
+            document.activeElement.blur();
+          }
+          return handleLoginSubmit();
+        },
+        'btn-signup': (e) => {
+          if (document.activeElement && document.activeElement.id !== 'btn-signup' && typeof document.activeElement.blur === 'function') {
+            document.activeElement.blur();
+          }
+          return handleSignupSubmit();
+        },
+        'btn-logout': async () => {
+          await supabase.auth.signOut();
+          await refreshSession();
+        },
+        'btn-nav-chat': async () => {
+          if (!me || me.status !== 'approved' || me.is_banned) return;
+          showView('chat');
+          await loadChat(true);
+        },
+        'btn-nav-dm': async () => {
+          if (!me || me.status !== 'approved' || me.is_banned) return;
+          showView('dm');
+          await loadDmRequests();
+          renderDmList();
+          if (selectedDmPeer) await loadDmThread(true);
+        },
+        'btn-nav-profile': () => {
+          if (!me || me.status !== 'approved' || me.is_banned) return;
+          syncProfileForm();
+          showView('profile');
+        },
+        'btn-toggle-admin': async () => {
+          if (!canAdmin()) return;
+          showView('admin');
+          await loadAdmin();
+        },
+        'btn-send-chat': () => sendChatMessage(),
+        'btn-send-dm': () => sendDm(),
+        'btn-mobile-members': () => {
+          const d = document.getElementById('mobile-drawer');
+          const b = document.getElementById('mobile-drawer-backdrop');
+          if (d) d.classList.remove('hidden');
+          if (b) b.classList.remove('hidden');
+        },
+        'btn-close-mobile-drawer': () => closeMobileDrawer(),
+        'btn-close-modal': () => {
+          const m = document.getElementById('member-modal');
+          if (m) m.classList.add('hidden');
+          inspectedMember = null;
+        }
+      };
+
+      Object.keys(staticMap).forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) bindUniversalTap(el, staticMap[id]);
+      });
+
+      document.querySelectorAll('button').forEach((btn) => {
+        if (btn.dataset.tapBound !== '1') {
+          bindUniversalTap(btn, (ev) => {
+            if (btn.id && staticMap[btn.id]) return staticMap[btn.id](ev);
+          });
+        }
+      });
+    }
+
+    const esc = (s) => {
+      const d = document.createElement('div');
+      d.textContent = s ?? '';
+      return d.innerHTML;
+    };
+
+    const setNotice = (msg, isErr = false) => {
+      for (const id of ['app-notice', 'guest-notice']) {
+        const el = document.getElementById(id);
+        el.textContent = msg || '';
+        el.classList.toggle('err', !!isErr);
+      }
+      if (msg) {
+        clearTimeout(window.__nTimer);
+        window.__nTimer = setTimeout(() => setNotice(''), 4000);
+      }
+    };
+
+    function playNotifSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(740, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(980, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.18);
+      } catch (_) {}
+    }
+
+    function showDmToast(senderName, previewText, peerId) {
+      toastPeerId = peerId;
+      const toast = document.getElementById('dm-toast');
+      toast.innerHTML = `
+        <div style="font-weight:600; font-size:13px; margin-bottom:2px;">Nouveau message de ${esc(senderName)}</div>
+        <div class="muted" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(previewText)}</div>
+      `;
+      toast.classList.remove('hidden');
+      playNotifSound();
+
+      if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+        new Notification(`Message de ${senderName}`, { body: previewText });
+      }
+
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => toast.classList.add('hidden'), 6000);
+    }
+
+    function updateNotifBadges() {
+      const incomingPending = dmRequests.filter(r => session && r.recipient_id === session.user.id && r.status === 'pending').length;
+      const unreadMsgs = Object.values(unreadByPeer).reduce((a, b) => a + b, 0);
+      const total = incomingPending + unreadMsgs;
+
+      const badge = document.getElementById('dm-total-badge');
+      badge.textContent = total;
+      badge.classList.toggle('hidden', total === 0);
+
+      document.title = total > 0 ? `(${total}) Forum — # général` : 'Forum — # général';
+    }
+
+    const canAdmin = () => !!(perms.can_approve_users || perms.can_manage_roles || perms.can_manage_banned_words || perms.can_view_logs || perms.can_moderate);
+
+    function showView(name) {
+      currentView = name;
+      for (const [id, key] of [
+        ['chat-panel', 'chat'],
+        ['profile-panel', 'profile'],
+        ['dm-panel', 'dm'],
+        ['admin-panel', 'admin']
+      ]) {
+        document.getElementById(id).classList.toggle('hidden', name !== key);
+      }
+      document.getElementById('btn-nav-chat').classList.toggle('active', name === 'chat');
+      document.getElementById('btn-nav-dm').classList.toggle('active', name === 'dm');
+      document.getElementById('btn-nav-profile').classList.toggle('active', name === 'profile');
+      document.getElementById('btn-toggle-admin').classList.toggle('active', name === 'admin');
+    }
+
+    function getDmRelation(peerId) {
+      if (!session || !peerId) return null;
+      return dmRequests.find(r =>
+        (r.requester_id === session.user.id && r.recipient_id === peerId) ||
+        (r.requester_id === peerId && r.recipient_id === session.user.id)
+      ) || null;
+    }
+
+    // Contacts visibles dans la liste DM : uniquement ceux acceptés ou demandés (en attente / accepté)
+    function getAllowedDmContacts() {
+      if (!session) return [];
+      const activeIds = new Set();
+      for (const r of dmRequests) {
+        if (r.status === 'accepted' || r.status === 'pending') {
+          const otherId = r.requester_id === session.user.id ? r.recipient_id : r.requester_id;
+          activeIds.add(otherId);
+        }
+      }
+      return members.filter(m =>
+        m.id !== session.user.id &&
+        m.status === 'approved' &&
+        !m.is_banned &&
+        activeIds.has(m.id)
+      );
+    }
+
+    async function loadDmRequests() {
+      if (!session) return;
+      const { data, error } = await supabase
+        .from('dm_requests')
+        .select('*')
+        .or(`requester_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`);
+      if (error) return setNotice(error.message, true);
+      dmRequests = data || [];
+      updateNotifBadges();
+      renderDmList();
+      if (currentView === 'dm' && selectedDmPeer) {
+        renderDmRequestBanner();
+      }
+    }
+
+    async function loadRoles() {
+      const { data } = await supabase.from('roles').select('*').order('created_at');
+      roles = data || [];
+      document.getElementById('roles-list').innerHTML = roles.map(r => {
+        const list = [
+          r.can_moderate && 'modérer',
+          r.can_approve_users && 'valider/ban',
+          r.can_manage_roles && 'rôles',
+          r.can_manage_banned_words && 'mots bannis',
+          r.can_view_logs && 'logs'
+        ].filter(Boolean).join(', ') || 'aucune';
+        return `<div style="margin-bottom:4px;"><strong>${esc(r.name)}</strong> : ${list}</div>`;
+      }).join('');
+    }
+
+    async function loadMembers() {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, username, role, status, bio, avatar_url, banner_url, profile_color, is_banned, ban_reason')
+        .order('username');
+      members = data || [];
+
+      const approvedVisible = members.filter(m => m.status === 'approved' && !m.is_banned);
+      document.getElementById('members-count').textContent = approvedVisible.length;
+
+      const sortedApproved = [...approvedVisible].sort((a, b) => {
+        const oa = isUserOnline(a.id) ? 0 : 1;
+        const ob = isUserOnline(b.id) ? 0 : 1;
+        if (oa !== ob) return oa - ob;
+        return (a.username || '').localeCompare(b.username || '', 'fr');
+      });
+      const onlineCount = sortedApproved.filter(m => isUserOnline(m.id)).length;
+      document.getElementById('members-count').textContent = `${onlineCount} en ligne / ${sortedApproved.length}`;
+
+      document.getElementById('right-members-list').innerHTML = sortedApproved.map(m => {
+        const col = /^#[0-9a-fA-F]{6}$/.test(m.profile_color || '') ? m.profile_color : '#9aa2b1';
+        const unread = unreadByPeer[m.id] || 0;
+        const on = isUserOnline(m.id);
+        return `
+          <div class="member-row" data-mid="${m.id}">
+            ${renderAvatarWithPresence(m.avatar_url, m.id, 'avatar-sm', false)}
+            <span style="color:${col}; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">${esc(m.username)}</span>
+            <span class="muted" style="font-size:11px;">${on ? 'En ligne' : 'Hors ligne'}</span>
+            ${m.role === 'admin' ? '<span class="tag">admin</span>' : ''}
+            ${unread > 0 ? `<span class="notif-badge">${unread}</span>` : ''}
+          </div>
+        `;
+      }).join('');
+
+      const mobileList = document.getElementById('mobile-members-list');
+      const mobileCount = document.getElementById('mobile-drawer-count');
+      const mobileOnlineCount = document.getElementById('mobile-online-count');
+      if (mobileCount) mobileCount.textContent = `${onlineCount} en ligne / ${sortedApproved.length}`;
+      if (mobileOnlineCount) mobileOnlineCount.textContent = `${onlineCount}/${sortedApproved.length}`;
+      if (mobileList) {
+        mobileList.innerHTML = sortedApproved.map(m => {
+          const col = /^#[0-9a-fA-F]{6}$/.test(m.profile_color || '') ? m.profile_color : '#9aa2b1';
+          const unread = unreadByPeer[m.id] || 0;
+          const on = isUserOnline(m.id);
+          return `
+            <div class="member-row" data-mid="${m.id}">
+              ${renderAvatarWithPresence(m.avatar_url, m.id, 'avatar-sm', false)}
+              <span style="color:${col}; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">${esc(m.username)}</span>
+              <span class="muted" style="font-size:11px;">${on ? 'En ligne' : 'Hors ligne'}</span>
+              ${m.role === 'admin' ? '<span class="tag">admin</span>' : ''}
+              ${unread > 0 ? `<span class="notif-badge">${unread}</span>` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
+      document.querySelectorAll('.member-row').forEach(row => {
+        row.addEventListener('click', () => {
+          closeMobileDrawer();
+          openMemberModal(row.dataset.mid);
+        });
+      });
+
+      renderDmList();
+    }
+
+    async function openMemberModal(memberId) {
+      const m = members.find(x => x.id === memberId);
+      if (!m) return;
+      inspectedMember = m;
+
+      const bannerEl = document.getElementById('modal-banner');
+      bannerEl.style.backgroundImage = m.banner_url ? `url("${m.banner_url.replace(/"/g, '')}")` : 'none';
+      bannerEl.style.backgroundColor = /^#[0-9a-fA-F]{6}$/.test(m.profile_color || '') ? m.profile_color : '#252a36';
+
+      document.getElementById('modal-avatar').src = m.avatar_url || FALLBACK_AVATAR;
+      document.getElementById('modal-username').textContent = m.username;
+      const modalOnline = isUserOnline(m.id);
+      const mpEl = document.getElementById('modal-presence-status');
+      mpEl.textContent = modalOnline ? '● En ligne' : '○ Hors ligne';
+      mpEl.style.color = modalOnline ? '#7ee787' : '#9aa2b1';
+      document.getElementById('modal-role-tag').textContent = m.role || 'member';
+      document.getElementById('modal-ban-tag').classList.toggle('hidden', !m.is_banned);
+      document.getElementById('modal-bio').textContent = m.bio || 'Aucune biographie.';
+      document.getElementById('modal-ban-reason').textContent = m.is_banned && m.ban_reason ? `Motif du ban : ${m.ban_reason}` : '';
+
+      const isSelf = session && m.id === session.user.id;
+      const dmBtn = document.getElementById('modal-dm-btn');
+      dmBtn.classList.toggle('hidden', isSelf);
+      if (!isSelf) {
+        const rel = getDmRelation(m.id);
+        if (rel?.status === 'accepted') dmBtn.textContent = 'Ouvrir le DM';
+        else if (rel?.status === 'pending' && rel.requester_id === session.user.id) dmBtn.textContent = 'Demande envoyée';
+        else if (rel?.status === 'pending' && rel.recipient_id === session.user.id) dmBtn.textContent = 'Voir la demande';
+        else dmBtn.textContent = 'Demander en DM';
+      }
+
+      const canBan = !isSelf && !!(perms.can_approve_users || perms.can_manage_roles);
+      document.getElementById('modal-ban-btn').classList.toggle('hidden', !canBan || !!m.is_banned);
+      document.getElementById('modal-unban-btn').classList.toggle('hidden', !canBan || !m.is_banned);
+
+      const adminBox = document.getElementById('modal-admin-controls');
+      if (canBan || perms.can_manage_roles) {
+        adminBox.classList.remove('hidden');
+        const sel = document.getElementById('modal-role-select');
+        sel.innerHTML = roles.map(r => `<option value="${esc(r.name)}" ${r.name === m.role ? 'selected' : ''}>${esc(r.name)}</option>`).join('');
+        sel.disabled = !perms.can_manage_roles;
+        document.getElementById('modal-approve-btn').classList.toggle('hidden', !perms.can_approve_users);
+        document.getElementById('modal-reject-btn').classList.toggle('hidden', !perms.can_approve_users);
+      } else {
+        adminBox.classList.add('hidden');
+      }
+
+      if (unreadByPeer[memberId]) {
+        delete unreadByPeer[memberId];
+        updateNotifBadges();
+        await loadMembers();
+      }
+
+      document.getElementById('member-modal').classList.remove('hidden');
+    }
+
+    function parseAnnouncement(content) {
+      if (typeof content !== 'string' || !content.startsWith('[ANNONCE]')) return null;
+      const body = content.replace(/^\[ANNONCE\]\s*/, '');
+      let kind = 'info';
+      if (/banni|ban/i.test(body)) kind = 'ban';
+      else if (/rejoint|approuvé|accepté/i.test(body)) kind = 'join';
+      return { body, kind };
+    }
+
+    async function postSystemAnnouncement(text) {
+      const msg = `[ANNONCE] ${text}`;
+      try {
+        if (session) {
+          await supabase.from('chat_messages').insert({ author_id: session.user.id, content: msg });
+        }
+      } catch (_) {}
+      try {
+        if (session) {
+          await supabase.from('audit_logs').insert({ action: 'announcement', details: text });
+        }
+      } catch (_) {}
+      if (!window.__localAnnouncements) window.__localAnnouncements = [];
+      window.__localAnnouncements.push({
+        id: 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        content: msg,
+        created_at: new Date().toISOString()
+      });
+      if (me?.status === 'approved' && !me?.is_banned) {
+        await loadChat(true);
+      }
+    }
+
+    async function loadChat(forceScroll = false) {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('id, content, created_at, author_id, profiles(id, username, role, avatar_url, profile_color, is_banned)')
+        .order('created_at', { ascending: true })
+        .limit(150);
+
+      if (error) {
+        setNotice('Erreur synchro salon : ' + error.message, true);
+        return;
+      }
+
+      const feed = document.getElementById('chat-feed');
+      if (!feed) return;
+
+      const merged = [...(data || [])];
+      if (window.__localAnnouncements && window.__localAnnouncements.length > 0) {
+        const existingBodies = new Set(merged.map(x => x.content));
+        for (const loc of window.__localAnnouncements) {
+          if (!existingBodies.has(loc.content)) merged.push(loc);
+        }
+      }
+
+      const nextSig = merged.map(m => `${m.id}:${m.content}:${m.profiles?.username || ''}:${m.profiles?.profile_color || ''}`).join('||');
+      const isNearBottom = (feed.scrollHeight - feed.scrollTop - feed.clientHeight) < 80;
+
+      if (feed.dataset.lastChatSig === nextSig && !forceScroll) {
+        return;
+      }
+      feed.dataset.lastChatSig = nextSig;
+
+      if (merged.length === 0) {
+        feed.innerHTML = '<div class="muted">Aucun message pour l’instant dans # général.</div>';
+        return;
+      }
+
+      feed.innerHTML = merged.map(msg => {
+        const ann = parseAnnouncement(msg.content);
+        const timeStr = new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        if (ann) {
+          return `
+            <div class="system-announcement ${ann.kind}">
+              <span>📢</span>
+              <span style="flex:1;">${esc(ann.body)}</span>
+              <span class="muted">${timeStr}</span>
+            </div>
+          `;
+        }
+        const p = msg.profiles || members.find(m => m.id === msg.author_id) || null;
+        const col = /^#[0-9a-fA-F]{6}$/.test(p?.profile_color || '') ? p.profile_color : '#eceff4';
+        const canDel = session && (session.user.id === msg.author_id || perms.can_moderate);
+        return `
+          <div class="chat-line">
+            <img class="avatar-img" src="${esc(p?.avatar_url || FALLBACK_AVATAR)}" alt="" style="cursor:pointer;" data-mid="${msg.author_id}" />
+            <div style="min-width:0; flex:1;">
+              <div class="row" style="gap:6px;">
+                <strong style="color:${col}; cursor:pointer;" data-mid="${msg.author_id}">${esc(p?.username || 'Membre')}</strong>
+                <span class="tag">${esc(p?.role || '')}</span>
+                <span class="muted">${timeStr}</span>
+              </div>
+              <div style="margin-top:2px; white-space:pre-wrap; word-break:break-word;">${esc(msg.content)}</div>
+            </div>
+            ${canDel ? `<button class="danger sm msg-actions del-chat-btn" data-id="${msg.id}">Suppr.</button>` : ''}
+          </div>
+        `;
+      }).join('');
+
+      if (forceScroll || isNearBottom || !feed.dataset.hadInitialScroll) {
+        feed.scrollTop = feed.scrollHeight;
+        feed.dataset.hadInitialScroll = '1';
+      }
+
+      feed.querySelectorAll('[data-mid]').forEach(el => {
+        el.addEventListener('click', () => openMemberModal(el.dataset.mid));
+      });
+      feed.querySelectorAll('.del-chat-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const targetMsg = (data || []).find(x => Number(x.id) === Number(btn.dataset.id));
+          const authorName = targetMsg?.profiles?.username || 'un membre';
+          const { error: delErr } = await supabase.from('chat_messages').delete().eq('id', Number(btn.dataset.id));
+          if (delErr) return setNotice(delErr.message, true);
+          await postSystemAnnouncement(`Un message de ${authorName} a été supprimé par ${me?.username || 'un administrateur'}.`);
+          await loadChat(true);
+        });
+      });
+    }
+
+    function renderDmList() {
+      const contacts = getAllowedDmContacts();
+
+      const incoming = dmRequests.filter(r => session && r.recipient_id === session.user.id && r.status === 'pending');
+      const reqSection = document.getElementById('dm-requests-section');
+      if (incoming.length > 0) {
+        reqSection.classList.remove('hidden');
+        document.getElementById('dm-requests-list').innerHTML = incoming.map(r => {
+          const u = members.find(m => m.id === r.requester_id);
+          if (!u) return '';
+          return `
+            <div class="member-row ${selectedDmPeer?.id === u.id ? 'channel-active-row' : ''}" data-uid="${u.id}">
+              <img class="avatar-img avatar-sm" src="${esc(u.avatar_url || FALLBACK_AVATAR)}" alt="" />
+              <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(u.username)}</span>
+              <span class="tag pending">Demande</span>
+            </div>
+          `;
+        }).join('');
+      } else {
+        reqSection.classList.add('hidden');
+      }
+
+      document.getElementById('dm-members-list').innerHTML = contacts.map(u => {
+        const unread = unreadByPeer[u.id] || 0;
+        const rel = getDmRelation(u.id);
+        const statusTag = rel?.status === 'pending' && rel.requester_id === session.user.id
+          ? '<span class="tag pending">En attente</span>'
+          : '';
+        const senderAlert = unread > 0
+          ? `<span class="dm-sender-alert">● ${unread} nouveau${unread > 1 ? 'x' : ''}</span>`
+          : '';
+        const on = isUserOnline(u.id);
+        return `
+          <div class="member-row ${selectedDmPeer?.id === u.id ? 'channel-active-row' : ''} ${unread > 0 ? 'has-unread' : ''}" data-uid="${u.id}">
+            ${renderAvatarWithPresence(u.avatar_url, u.id, 'avatar-sm', false)}
+            <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:${unread > 0 ? '700' : '400'};">${esc(u.username)}</span>
+            <span class="muted" style="font-size:11px; color:${on ? '#7ee787' : '#9aa2b1'};">${on ? 'En ligne' : 'Hors ligne'}</span>
+            ${senderAlert}
+            ${statusTag}
+          </div>
+        `;
+      }).join('') || '<div class="muted">Aucune demande ou discussion active. Clique sur un membre à droite pour envoyer une demande.</div>';
+
+      document.querySelectorAll('#dm-panel [data-uid]').forEach(el => {
+        el.addEventListener('click', async () => {
+          selectedDmPeer = members.find(x => x.id === el.dataset.uid) || null;
+          if (selectedDmPeer) {
+            delete unreadByPeer[selectedDmPeer.id];
+            updateNotifBadges();
+          }
+          renderDmList();
+          await loadDmThread(true);
+        });
+      });
+    }
+
+    function renderDmRequestBanner() {
+      const banner = document.getElementById('dm-request-banner');
+      const composerWrap = document.getElementById('dm-composer-wrap');
+      const input = document.getElementById('dm-input');
+      const btn = document.getElementById('btn-send-dm');
+
+      if (!selectedDmPeer || !session) {
+        banner.classList.add('hidden');
+        composerWrap.classList.add('hidden');
+        return;
+      }
+
+      const rel = getDmRelation(selectedDmPeer.id);
+
+      // Cas 1 : Pas encore de demande -> envoyer une demande (avec message optionnel ou bouton direct)
+      if (!rel) {
+        banner.classList.remove('hidden');
+        banner.innerHTML = `
+          <span>Envoie une demande de discussion à <strong>${esc(selectedDmPeer.username)}</strong>.</span>
+          <button id="btn-send-dm-invite" class="sm">Demander en DM</button>
+        `;
+        composerWrap.classList.remove('hidden');
+        input.disabled = false;
+        input.placeholder = `Message d'invitation pour ${selectedDmPeer.username} (optionnel)...`;
+        btn.disabled = false;
+        btn.textContent = 'Envoyer demande';
+
+        document.getElementById('btn-send-dm-invite').addEventListener('click', async () => {
+          await createDmRequest(selectedDmPeer.id, '');
+        });
+        return;
+      }
+
+      // Cas 2 : Demande en attente
+      if (rel.status === 'pending') {
+        if (rel.recipient_id === session.user.id) {
+          banner.classList.remove('hidden');
+          banner.innerHTML = `
+            <span><strong>${esc(selectedDmPeer.username)}</strong> souhaite discuter avec toi en privé.</span>
+            <div class="row">
+              <button id="btn-accept-dm-req" class="ok sm">Accepter</button>
+              <button id="btn-reject-dm-req" class="danger sm">Refuser</button>
+            </div>
+          `;
+          composerWrap.classList.add('hidden');
+
+          document.getElementById('btn-accept-dm-req').addEventListener('click', async () => {
+            const { data: updatedRows, error } = await supabase
+              .from('dm_requests')
+              .update({ status: 'accepted', updated_at: new Date().toISOString() })
+              .eq('id', rel.id)
+              .select();
+            if (error) return setNotice(error.message, true);
+            if (!updatedRows || updatedRows.length === 0) {
+              return setNotice("Impossible d'accepter : vérifie la politique RLS UPDATE sur dm_requests.", true);
+            }
+            setNotice('Demande de DM acceptée.');
+            await loadDmRequests();
+      if (session) {
+        const { data: existingDms } = await supabase
+          .from('direct_messages')
+          .select('id')
+          .eq('recipient_id', session.user.id)
+          .limit(50);
+        window.__seenDmIds = new Set((existingDms || []).map(x => x.id));
+      }
+            await loadDmThread(true);
+          });
+
+          document.getElementById('btn-reject-dm-req').addEventListener('click', async () => {
+            const { data: updatedRows, error } = await supabase
+              .from('dm_requests')
+              .update({ status: 'rejected', updated_at: new Date().toISOString() })
+              .eq('id', rel.id)
+              .select();
+            if (error) return setNotice(error.message, true);
+            if (!updatedRows || updatedRows.length === 0) {
+              return setNotice("Impossible de refuser : vérifie la politique RLS UPDATE sur dm_requests.", true);
+            }
+            setNotice('Demande de DM refusée.');
+            await loadDmRequests();
+            await loadDmThread(true);
+          });
+        } else {
+          banner.classList.remove('hidden');
+          banner.innerHTML = `<span>Demande envoyée. En attente que <strong>${esc(selectedDmPeer.username)}</strong> accepte la discussion.</span>`;
+          composerWrap.classList.add('hidden');
+        }
+        return;
+      }
+
+      // Cas 3 : Demande refusée
+      if (rel.status === 'rejected') {
+        banner.classList.remove('hidden');
+        if (rel.recipient_id === session.user.id) {
+          banner.innerHTML = `
+            <span>Tu as refusé la demande de <strong>${esc(selectedDmPeer.username)}</strong>.</span>
+            <button id="btn-reaccept-dm-req" class="ghost sm">Autoriser finalement</button>
+          `;
+          document.getElementById('btn-reaccept-dm-req').addEventListener('click', async () => {
+            const { error } = await supabase
+              .from('dm_requests')
+              .update({ status: 'accepted', updated_at: new Date().toISOString() })
+              .eq('id', rel.id);
+            if (error) return setNotice(error.message, true);
+            await loadDmRequests();
+            await loadDmThread(true);
+          });
+        } else {
+          banner.innerHTML = `<span><strong>${esc(selectedDmPeer.username)}</strong> a refusé ta demande de message privé.</span>`;
+        }
+        composerWrap.classList.add('hidden');
+        return;
+      }
+
+      // Cas 4 : Accepté -> discussion libre
+      banner.classList.add('hidden');
+      composerWrap.classList.remove('hidden');
+      input.disabled = false;
+      input.placeholder = 'Écrire un message privé...';
+      btn.disabled = false;
+      btn.textContent = 'Envoyer';
+    }
+
+    async function createDmRequest(peerId, firstMessage = '') {
+      if (!session || !peerId) return;
+      const existing = getDmRelation(peerId);
+      if (existing) return existing;
+
+      const { data: newReq, error: reqErr } = await supabase
+        .from('dm_requests')
+        .insert({
+          requester_id: session.user.id,
+          recipient_id: peerId,
+          status: 'pending'
+        })
+        .select()
+        .single();
+      if (reqErr) {
+        setNotice(reqErr.message, true);
+        return null;
+      }
+
+      dmRequests = [...dmRequests.filter(r => r.id !== newReq.id), newReq];
+
+      if (firstMessage && firstMessage.trim()) {
+        const { error: msgErr } = await supabase.from('direct_messages').insert({
+          sender_id: session.user.id,
+          recipient_id: peerId,
+          content: firstMessage.trim()
+        });
+        if (msgErr) {
+          setNotice(msgErr.message, true);
+        }
+      }
+
+      setNotice('Demande de DM envoyée.');
+      await loadDmRequests();
+      await loadDmThread(true);
+      return newReq;
+    }
+
+    async function loadDmThread(forceScroll = false) {
+      if (!selectedDmPeer || !session) return;
+      delete unreadByPeer[selectedDmPeer.id];
+      updateNotifBadges();
+
+      const peerOnline = isUserOnline(selectedDmPeer.id);
+      document.getElementById('dm-peer-header').innerHTML =
+        `Message privé — ${esc(selectedDmPeer.username)} <span class="muted" style="margin-left:6px; color:${peerOnline ? '#7ee787' : '#9aa2b1'};">${peerOnline ? '● En ligne' : '○ Hors ligne'}</span>`;
+      renderDmRequestBanner();
+
+      const { data, error } = await supabase
+        .from('direct_messages')
+        .select('id, sender_id, recipient_id, content, created_at')
+        .or(`and(sender_id.eq.${session.user.id},recipient_id.eq.${selectedDmPeer.id}),and(sender_id.eq.${selectedDmPeer.id},recipient_id.eq.${session.user.id})`)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        setNotice('Erreur synchro DM : ' + error.message, true);
+        return;
+      }
+
+      const thread = document.getElementById('dm-thread');
+      const sig = `${selectedDmPeer.id}::` + (data || []).map(x => `${x.id}:${x.content}`).join('|');
+      if (thread.dataset.lastSig === sig && !forceScroll) return;
+      thread.dataset.lastSig = sig;
+      thread.innerHTML = (data || []).map(m => {
+        const mine = m.sender_id === session.user.id;
+        return `
+          <div class="dm-bubble ${mine ? 'mine' : ''}">
+            <div class="muted">${mine ? 'Moi' : esc(selectedDmPeer.username)} · ${new Date(m.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
+            <div style="margin-top:2px; white-space:pre-wrap;">${esc(m.content)}</div>
+          </div>
+        `;
+      }).join('') || '<div class="muted">Début de la conversation.</div>';
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    async function loadAdmin() {
+      await loadMembers();
+
+      const pendingUsers = members.filter(u => u.status === 'pending');
+      const pBadge = document.getElementById('admin-pending-badge');
+      if (pBadge) {
+        pBadge.textContent = pendingUsers.length;
+        pBadge.classList.toggle('hidden', pendingUsers.length === 0);
+      }
+
+      const pendingTbody = document.getElementById('admin-pending-tbody');
+      if (pendingTbody) {
+        pendingTbody.innerHTML = pendingUsers.map(u => `
+          <tr>
+            <td>
+              <div class="row" style="gap:6px; cursor:pointer;" data-open-mid="${u.id}">
+                <img class="avatar-img avatar-sm" src="${esc(u.avatar_url || FALLBACK_AVATAR)}" alt="" />
+                <strong>${esc(u.username)}</strong>
+              </div>
+            </td>
+            <td><span class="tag pending">En attente</span></td>
+            <td class="row">
+              ${perms.can_approve_users ? `
+                <button class="ok sm p-decide" data-uid="${u.id}" data-uname="${esc(u.username)}" data-st="approved">Accepter</button>
+                <button class="danger sm p-decide" data-uid="${u.id}" data-uname="${esc(u.username)}" data-st="rejected">Refuser</button>
+              ` : '<span class="muted">Permission requise</span>'}
+            </td>
+          </tr>
+        `).join('') || '<tr><td colspan="3" class="muted">Aucun membre en attente d’acceptation.</td></tr>';
+
+        pendingTbody.querySelectorAll('[data-open-mid]').forEach(el => {
+          el.addEventListener('click', () => openMemberModal(el.dataset.openMid));
+        });
+
+        pendingTbody.querySelectorAll('.p-decide').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const st = btn.dataset.st;
+            const uname = btn.dataset.uname;
+            const { error } = await supabase.from('profiles').update({ status: st }).eq('id', btn.dataset.uid);
+            if (error) return setNotice(error.message, true);
+            if (st === 'approved') {
+              await postSystemAnnouncement(`${uname} a rejoint le forum !`);
+              setNotice(`${uname} accepté.`);
+            } else {
+              setNotice(`${uname} refusé.`);
+            }
+            await loadAdmin();
+          });
+        });
+      }
+
+      const tbody = document.getElementById('admin-users-tbody');
+      tbody.innerHTML = members.map(u => {
+        const isSelf = session && u.id === session.user.id;
+        return `
+          <tr>
+            <td>
+              <div class="row" style="gap:6px; cursor:pointer;" data-open-mid="${u.id}">
+                <img class="avatar-img avatar-sm" src="${esc(u.avatar_url || FALLBACK_AVATAR)}" alt="" />
+                <strong>${esc(u.username)}</strong>
+              </div>
+            </td>
+            <td><span class="tag ${u.status}">${esc(u.status)}</span></td>
+            <td>${u.is_banned ? `<span class="tag banned">Banni</span>` : '<span class="muted">Non</span>'}</td>
+            <td class="row">
+              ${perms.can_approve_users ? `
+                <button class="ok sm a-status" data-uid="${u.id}" data-st="approved">Approuver</button>
+                <button class="ghost sm a-status" data-uid="${u.id}" data-st="rejected">Refuser</button>
+              ` : '-'}
+            </td>
+            <td>
+              ${perms.can_manage_roles ? `
+                <select class="a-role" data-uid="${u.id}">
+                  ${roles.map(r => `<option value="${esc(r.name)}" ${r.name === u.role ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}
+                </select>
+              ` : esc(u.role)}
+            </td>
+            <td class="row">
+              ${!isSelf && (perms.can_approve_users || perms.can_manage_roles) ? (
+                u.is_banned
+                  ? `<button class="ok sm a-ban" data-uid="${u.id}" data-ban="0">Débannir</button>`
+                  : `<button class="danger sm a-ban" data-uid="${u.id}" data-ban="1">Bannir</button>`
+              ) : '-'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('[data-open-mid]').forEach(el => el.addEventListener('click', () => openMemberModal(el.dataset.openMid)));
+
+      tbody.querySelectorAll('.a-status').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const target = members.find(x => x.id === btn.dataset.uid);
+          const { error } = await supabase.from('profiles').update({ status: btn.dataset.st }).eq('id', btn.dataset.uid);
+          if (error) return setNotice(error.message, true);
+          if (btn.dataset.st === 'approved' && target) {
+            await postSystemAnnouncement(`${target.username} a rejoint le forum !`);
+          }
+          setNotice('Statut mis à jour.');
+          await loadAdmin();
+        });
+      });
+
+      tbody.querySelectorAll('.a-role').forEach(sel => {
+        sel.addEventListener('change', async () => {
+          const { error } = await supabase.from('profiles').update({ role: sel.value }).eq('id', sel.dataset.uid);
+          if (error) return setNotice(error.message, true);
+          setNotice('Rôle mis à jour.');
+          await refreshSession(true);
+          await loadAdmin();
+        });
+      });
+
+      tbody.querySelectorAll('.a-ban').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const target = members.find(x => x.id === btn.dataset.uid);
+          const ban = btn.dataset.ban === '1';
+          const reason = ban ? (prompt('Motif du bannissement (optionnel) :') || '') : '';
+          const { error } = await supabase.from('profiles').update({ is_banned: ban, ban_reason: reason }).eq('id', btn.dataset.uid);
+          if (error) return setNotice(error.message, true);
+          if (ban && target) {
+            await postSystemAnnouncement(`${target.username} a été banni${reason ? ` (${reason})` : ''}.`);
+          } else if (!ban && target) {
+            await postSystemAnnouncement(`${target.username} a été débanni.`);
+          }
+          setNotice(ban ? 'Membre banni.' : 'Membre débanni.');
+          await loadAdmin();
+        });
+      });
+
+      if (perms.can_manage_banned_words) {
+        const { data: words } = await supabase.from('banned_words').select('*').order('word');
+        document.getElementById('banned-words-list').innerHTML = (words || []).map(w => `
+          <span class="tag">${esc(w.word)} <a href="#" class="del-w" data-wid="${w.id}" style="color:#f85149; text-decoration:none; margin-left:4px;">×</a></span>
+        `).join('') || '<span class="muted">Aucun mot banni.</span>';
+
+        document.querySelectorAll('.del-w').forEach(a => {
+          a.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await supabase.from('banned_words').delete().eq('id', Number(a.dataset.wid));
+            await loadAdmin();
+          });
+        });
+      }
+
+      if (perms.can_view_logs) {
+        const { data: logs } = await supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50);
+        document.getElementById('admin-logs-tbody').innerHTML = (logs || []).map(l => `
+          <tr>
+            <td class="muted">${new Date(l.created_at).toLocaleString('fr-FR')}</td>
+            <td><strong>${esc(l.action)}</strong></td>
+            <td>${esc(l.details)}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function syncProfileForm() {
+      if (!me) return;
+      document.getElementById('me-mini-avatar').src = me.avatar_url || FALLBACK_AVATAR;
+      document.getElementById('me-mini-name').textContent = me.username || '';
+      document.getElementById('me-mini-role').textContent = me.is_banned ? 'Banni' : (me.role || '');
+
+      document.getElementById('prof-username').value = me.username || '';
+      document.getElementById('prof-bio').value = me.bio || '';
+      document.getElementById('prof-color').value = me.profile_color || '#5865f2';
+      document.getElementById('prof-avatar-url').value = me.avatar_url || '';
+      document.getElementById('prof-banner-url').value = me.banner_url || '';
+
+      document.getElementById('preview-username').textContent = me.username || '';
+      document.getElementById('preview-role-tag').textContent = me.role || '';
+      document.getElementById('preview-bio').textContent = me.bio || 'Aucune biographie.';
+      document.getElementById('preview-avatar').src = me.avatar_url || FALLBACK_AVATAR;
+      const b = document.getElementById('preview-banner');
+      b.style.backgroundImage = me.banner_url ? `url("${me.banner_url.replace(/"/g, '')}")` : 'none';
+      b.style.backgroundColor = /^#[0-9a-fA-F]{6}$/.test(me.profile_color || '') ? me.profile_color : '#252a36';
+    }
+
+    function startPresenceTracking() {
+      if (presenceChannel) {
+        supabase.removeChannel(presenceChannel);
+        presenceChannel = null;
+      }
+      if (!session || !me) return;
+
+      onlineUserIds = new Set([session.user.id]);
+
+      presenceChannel = supabase.channel('forum-online-presence', {
+        config: { presence: { key: session.user.id } }
+      });
+
+      const syncPresence = () => {
+        const state = presenceChannel.presenceState();
+        const active = new Set();
+        if (session?.user?.id) active.add(session.user.id);
+        for (const key of Object.keys(state || {})) {
+          active.add(key);
+        }
+        onlineUserIds = active;
+        if (me?.status === 'approved' && !me?.is_banned) {
+          loadMembers().catch(() => {});
+          if (currentView === 'dm' && selectedDmPeer) {
+            document.getElementById('dm-peer-header').innerHTML =
+              `Message privé — ${esc(selectedDmPeer.username)} <span class="muted">(${isUserOnline(selectedDmPeer.id) ? '🟢 En ligne' : '⚫ Hors ligne'})</span>`;
+          }
+          if (inspectedMember) {
+            const stEl = document.getElementById('modal-presence-status');
+            if (stEl) {
+              const on = isUserOnline(inspectedMember.id);
+              stEl.textContent = on ? '🟢 En ligne' : '⚫ Hors ligne';
+              stEl.style.color = on ? '#7ee787' : '#9aa2b1';
+            }
+          }
+        }
+      };
+
+      presenceChannel
+        .on('presence', { event: 'sync' }, syncPresence)
+        .on('presence', { event: 'join' }, syncPresence)
+        .on('presence', { event: 'leave' }, syncPresence)
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await presenceChannel.track({
+              user_id: session.user.id,
+              username: me.username || '',
+              online_at: new Date().toISOString()
+            });
+            syncPresence();
+          }
+        });
+    }
+
+    async function syncAllMessagesNow(forceScroll = false) {
+      if (!session || !me || me.status !== 'approved' || me.is_banned) return;
+      if (window.__isSyncingMessages) return;
+      window.__isSyncingMessages = true;
+      try {
+        if (currentView === 'chat') {
+          await loadChat(forceScroll);
+        }
+
+        const prevIds = new Set(dmRequests.map(r => `${r.id}:${r.status}`));
+        const { data: reqs } = await supabase
+          .from('dm_requests')
+          .select('*')
+          .or(`requester_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`);
+        if (reqs) {
+          const changed = reqs.some(r => !prevIds.has(`${r.id}:${r.status}`)) || reqs.length !== dmRequests.length;
+          if (changed) {
+            dmRequests = reqs;
+            updateNotifBadges();
+            renderDmList();
+            if (currentView === 'dm' && selectedDmPeer) renderDmRequestBanner();
+          }
+        }
+
+        const { data: incomingDms } = await supabase
+          .from('direct_messages')
+          .select('id, sender_id, recipient_id, content, created_at')
+          .eq('recipient_id', session.user.id)
+          .order('created_at', { ascending: false })
+          .limit(30);
+
+        if (incomingDms && incomingDms.length > 0) {
+          if (!window.__seenDmIds) {
+            window.__seenDmIds = new Set(incomingDms.map(m => m.id));
+          } else {
+            for (const m of [...incomingDms].reverse()) {
+              if (!window.__seenDmIds.has(m.id)) {
+                window.__seenDmIds.add(m.id);
+                const isViewingThisThread = currentView === 'dm' && selectedDmPeer?.id === m.sender_id && !document.hidden;
+                const sender = members.find(x => x.id === m.sender_id);
+                if (!isViewingThisThread) {
+                  unreadByPeer[m.sender_id] = (unreadByPeer[m.sender_id] || 0) + 1;
+                  updateNotifBadges();
+                  renderDmList();
+                }
+                showDmToast(sender?.username || 'Message privé', m.content, m.sender_id);
+              }
+            }
+          }
+        }
+
+        if (currentView === 'dm' && selectedDmPeer) {
+          await loadDmThread(forceScroll);
+        }
+      } finally {
+        window.__isSyncingMessages = false;
+      }
+    }
+
+    function subscribeRealtime() {
+      if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+      if (window.__pollInterval) clearInterval(window.__pollInterval);
+      realtimeChannel = supabase
+        .channel('forum-messages-v15-' + Date.now())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, async () => {
+          if (me?.status === 'approved' && !me?.is_banned) await loadChat(true);
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async (payload) => {
+          const prev = members.find(x => x.id === payload.new?.id);
+          const next = payload.new;
+          await loadMembers();
+          if (next && prev) {
+            if (prev.status !== 'approved' && next.status === 'approved') {
+              await postSystemAnnouncement(`${next.username} a rejoint le forum !`);
+            }
+            if (!prev.is_banned && next.is_banned) {
+              await postSystemAnnouncement(`${next.username} a été banni${next.ban_reason ? ` (${next.ban_reason})` : ''}.`);
+            }
+          }
+          if (session && payload.new?.id === session.user.id) {
+            await refreshSession(true);
+          }
+          if (currentView === 'admin') await loadAdmin();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'dm_requests' }, async (payload) => {
+          if (!session) return;
+          const req = payload.new || payload.old;
+          if (!req || (req.requester_id !== session.user.id && req.recipient_id !== session.user.id)) return;
+
+          await loadDmRequests();
+
+          if (payload.eventType === 'INSERT' && req.recipient_id === session.user.id) {
+            const sender = members.find(m => m.id === req.requester_id);
+            showDmToast(sender?.username || 'Un membre', 'T’a envoyé une demande de DM.', req.requester_id);
+          } else if (payload.eventType === 'UPDATE' && req.requester_id === session.user.id && req.status === 'accepted') {
+            const peer = members.find(m => m.id === req.recipient_id);
+            setNotice(`${peer?.username || 'Le membre'} a accepté ta demande de DM.`);
+            if (currentView === 'dm' && selectedDmPeer?.id === req.recipient_id) {
+              await loadDmThread(true);
+            }
+          }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'direct_messages' }, async (payload) => {
+          const m = payload.new || payload.old;
+          if (!m || !session) return;
+          if (m.sender_id !== session.user.id && m.recipient_id !== session.user.id) return;
+
+          const peerId = m.sender_id === session.user.id ? m.recipient_id : m.sender_id;
+
+          if (payload.eventType === 'INSERT' && m.recipient_id === session.user.id) {
+            if (!window.__seenDmIds) window.__seenDmIds = new Set();
+            if (!window.__seenDmIds.has(m.id)) {
+              window.__seenDmIds.add(m.id);
+              const isViewingThisThread = currentView === 'dm' && selectedDmPeer?.id === m.sender_id && !document.hidden;
+              const sender = members.find(x => x.id === m.sender_id);
+              if (!isViewingThisThread) {
+                unreadByPeer[m.sender_id] = (unreadByPeer[m.sender_id] || 0) + 1;
+                updateNotifBadges();
+                renderDmList();
+              }
+              showDmToast(sender?.username || 'Message privé', m.content, m.sender_id);
+            }
+          }
+
+          if (currentView === 'dm' && selectedDmPeer?.id === peerId) {
+            await loadDmThread(true);
+          }
+        })
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            setNotice('Realtime interrompu : mode secours actif.', true);
+          }
+        });
+
+      // Synchronisation rapide et continue pour salon général, DM, demandes et membres
+      window.__pollInterval = setInterval(() => {
+        syncAllMessagesNow(false).catch(() => {});
+      }, 1200);
+    }
+
+    function cleanupSyncChannels() {
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel);
+        realtimeChannel = null;
+      }
+      if (presenceChannel) {
+        supabase.removeChannel(presenceChannel);
+        presenceChannel = null;
+      }
+      if (window.__pollInterval) {
+        clearInterval(window.__pollInterval);
+        window.__pollInterval = null;
+      }
+    }
+
+    async function refreshSession(keepView = false) {
+      const { data } = await supabase.auth.getSession();
+      session = data.session;
+
+      if (!session) {
+        me = null;
+        perms = {};
+        cleanupSyncChannels();
+        onlineUserIds = new Set();
+        window.location.href = 'index-v17.html';
+        return;
+      }
+
+      document.getElementById('guest-screen').classList.add('hidden');
+      document.getElementById('app-screen').classList.remove('hidden');
+
+      if (!roles || roles.length === 0) {
+        document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) syncAllMessagesNow(true).catch(() => {});
+    });
+    window.addEventListener('focus', () => {
+      syncAllMessagesNow(true).catch(() => {});
+    });
+
+    await loadRoles();
+      }
+
+      const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+      me = prof;
+      syncProfileForm();
+
+      const rDef = roles.find(r => r.name === me?.role) || {};
+      const allowed = me?.status === 'approved' && !me?.is_banned;
+      perms = allowed ? rDef : {};
+
+      document.getElementById('btn-toggle-admin').classList.toggle('hidden', !allowed || !canAdmin());
+
+      const blocked = document.getElementById('blocked-panel');
+      if (!allowed) {
+        blocked.classList.remove('hidden');
+        for (const id of ['chat-panel', 'profile-panel', 'dm-panel', 'admin-panel']) {
+          document.getElementById(id).classList.add('hidden');
+        }
+        if (me?.is_banned) {
+          document.getElementById('blocked-title').textContent = 'Compte banni';
+          document.getElementById('blocked-desc').textContent = me.ban_reason ? `Motif : ${me.ban_reason}` : 'Ton accès au forum a été suspendu par un administrateur.';
+        } else {
+          document.getElementById('blocked-title').textContent = me?.status === 'rejected' ? 'Compte refusé' : 'Compte en attente de validation';
+          document.getElementById('blocked-desc').textContent = 'Un administrateur doit valider ton compte avant que tu puisses accéder au salon # général.';
+        }
+        return;
+      }
+
+      blocked.classList.add('hidden');
+      await loadMembers();
+      await loadDmRequests();
+      if (!keepView) {
+        showView('chat');
+        await loadChat(true);
+      } else if (currentView === 'chat') {
+        await loadChat(true);
+      } else if (currentView === 'dm' && selectedDmPeer) {
+        await loadDmThread(true);
+      } else if (currentView === 'admin') {
+        await loadAdmin();
+      }
+      cleanupSyncChannels();
+      subscribeRealtime();
+      startPresenceTracking();
+    }
+
+    async function uploadAsset(file, kind) {
+      const ext = (file.name.split('.').pop() || 'png').replace(/[^a-zA-Z0-9]/g, '');
+      const path = `${session.user.id}/${kind}_${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+      return data.publicUrl;
+    }
+
+    function closeMobileDrawer() {
+      document.getElementById('mobile-drawer')?.classList.add('hidden');
+      document.getElementById('mobile-drawer-backdrop')?.classList.add('hidden');
+    }
+    document.getElementById('btn-mobile-members')?.addEventListener('click', () => {
+      document.getElementById('mobile-drawer')?.classList.remove('hidden');
+      document.getElementById('mobile-drawer-backdrop')?.classList.remove('hidden');
+    });
+    document.getElementById('btn-close-mobile-drawer')?.addEventListener('click', closeMobileDrawer);
+    document.getElementById('mobile-drawer-backdrop')?.addEventListener('click', closeMobileDrawer);
+
+    // EVENTS
+    document.getElementById('dm-toast').addEventListener('click', async () => {
+      document.getElementById('dm-toast').classList.add('hidden');
+      if (!toastPeerId) return;
+      const peer = members.find(m => m.id === toastPeerId);
+      if (!peer) return;
+      selectedDmPeer = peer;
+      showView('dm');
+      await loadDmRequests();
+      renderDmList();
+      await loadDmThread(true);
+    });
+
+    let isSigningUp = false;
+    async function handleSignupSubmit() {
+      if (isSigningUp) return;
+      const btn = document.getElementById('btn-signup');
+      const username = document.getElementById('auth-username').value.trim();
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      if (!username || !email || !password) return setNotice('Remplis pseudo, e-mail et mot de passe.', true);
+      isSigningUp = true;
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Création...';
+      }
+      try {
+        const { error } = await supabase.auth.signUp({ email, password, options: { data: { username } } });
+        if (error) return setNotice(error.message, true);
+        setNotice('Compte créé.');
+        await refreshSession();
+      } catch (err) {
+        setNotice(err?.message || 'Erreur lors de la création.', true);
+      } finally {
+        isSigningUp = false;
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Créer un compte';
+        }
+      }
+    }
+
+    const signupBtnEl = document.getElementById('btn-signup');
+    signupBtnEl.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (document.activeElement && document.activeElement !== signupBtnEl && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+      }
+      handleSignupSubmit();
+    });
+
+    let isLoggingIn = false;
+    let lastLoginAttemptAt = 0;
+
+    async function handleLoginSubmit() {
+      const now = Date.now();
+      if (isLoggingIn || now - lastLoginAttemptAt < 120) return;
+      lastLoginAttemptAt = now;
+
+      const btn = document.getElementById('btn-login');
+      const emailEl = document.getElementById('auth-email');
+      const passEl = document.getElementById('auth-password');
+      const email = (emailEl?.value || '').trim();
+      const password = passEl?.value || '';
+
+      if (!email || !password) {
+        return setNotice('Remplis ton adresse e-mail et ton mot de passe.', true);
+      }
+      if (!email.includes('@') || !email.includes('.')) {
+        return setNotice(`E-mail invalide ("${email}"). Vérifie l'adresse (ex. nom@gmail.com).`, true);
+      }
+
+      isLoggingIn = true;
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Connexion...';
+      }
+      setNotice('Connexion en cours...');
+      try {
+        const loginPromise = supabase.auth.signInWithPassword({ email, password });
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Délai dépassé : vérifie la connexion internet de cet appareil.')), 12000)
+        );
+        const { data: authData, error } = await Promise.race([loginPromise, timeoutPromise]);
+        if (error) {
+          const msg = error.message === 'Invalid login credentials'
+            ? 'E-mail ou mot de passe incorrect.'
+            : error.message;
+          setNotice(msg, true);
+          return;
+        }
+        if (!authData?.session) {
+          setNotice('Connexion refusée ou compte non confirmé.', true);
+          return;
+        }
+        setNotice('');
+        await refreshSession();
+      } catch (err) {
+        setNotice(err?.message || 'Erreur réseau lors de la connexion.', true);
+      } finally {
+        isLoggingIn = false;
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Se connecter';
+        }
+      }
+    }
+
+    const authFormEl = document.getElementById('auth-form');
+    if (authFormEl) {
+      authFormEl.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleLoginSubmit();
+      });
+    }
+
+    const loginBtnEl = document.getElementById('btn-login');
+    if (loginBtnEl) {
+      loginBtnEl.onclick = (e) => {
+        if (e) e.preventDefault();
+        handleLoginSubmit();
+      };
+      loginBtnEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.keyCode === 13 || e.keyCode === 32) {
+          e.preventDefault();
+          handleLoginSubmit();
+        }
+      });
+    }
+
+    for (const fieldId of ['auth-username', 'auth-email', 'auth-password']) {
+      document.getElementById(fieldId)?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+          e.preventDefault();
+          handleLoginSubmit();
+        }
+      });
+    }
+
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      await refreshSession();
+    });
+
+    document.getElementById('btn-nav-chat').addEventListener('click', async () => {
+      if (me?.status !== 'approved' || me?.is_banned) return;
+      showView('chat');
+      await loadChat(true);
+    });
+
+    document.getElementById('btn-nav-dm').addEventListener('click', async () => {
+      if (me?.status !== 'approved' || me?.is_banned) return;
+      showView('dm');
+      await loadDmRequests();
+      renderDmList();
+      if (selectedDmPeer) await loadDmThread(true);
+    });
+
+    document.getElementById('btn-nav-profile').addEventListener('click', () => {
+      if (me?.status !== 'approved' || me?.is_banned) return;
+      syncProfileForm();
+      showView('profile');
+    });
+
+    document.getElementById('me-sidebar-card').addEventListener('click', () => {
+      if (me?.status === 'approved' && !me?.is_banned) {
+        syncProfileForm();
+        showView('profile');
+      }
+    });
+
+    document.getElementById('btn-toggle-admin').addEventListener('click', async () => {
+      if (!canAdmin()) return;
+      showView('admin');
+      await loadAdmin();
+    });
+
+    async function sendChatMessage() {
+      const inp = document.getElementById('chat-input');
+      const content = inp.value.trim();
+      if (!content || !session) return;
+      inp.value = '';
+      const { error } = await supabase.from('chat_messages').insert({ author_id: session.user.id, content });
+      if (error) return setNotice(error.message, true);
+      await loadChat(true);
+    }
+
+    document.getElementById('btn-send-chat').addEventListener('click', sendChatMessage);
+    document.getElementById('chat-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); sendChatMessage(); }
+    });
+
+    document.getElementById('btn-save-profile').addEventListener('click', async () => {
+      const username = document.getElementById('prof-username').value.trim();
+      const bio = document.getElementById('prof-bio').value.trim();
+      const profile_color = document.getElementById('prof-color').value;
+      let avatar_url = document.getElementById('prof-avatar-url').value.trim();
+      let banner_url = document.getElementById('prof-banner-url').value.trim();
+
+      if (!username) return setNotice('Le pseudo est requis.', true);
+      const cleanU = username.trim().replace(/\s+/g, ' ');
+      const dup = members.find(m => m.id !== session.user.id && (m.username || '').trim().replace(/\s+/g, ' ').toLowerCase() === cleanU.toLowerCase());
+      if (dup) return setNotice('Ce pseudo est déjà utilisé par un autre membre.', true);
+
+      try {
+        const avFile = document.getElementById('prof-avatar-file').files[0];
+        const bnFile = document.getElementById('prof-banner-file').files[0];
+        if (avFile) avatar_url = await uploadAsset(avFile, 'avatar');
+        if (bnFile) banner_url = await uploadAsset(bnFile, 'banner');
+      } catch (err) {
+        return setNotice('Upload image : ' + err.message, true);
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ username, bio, profile_color, avatar_url, banner_url })
+        .eq('id', session.user.id);
+
+      if (error) return setNotice(error.message, true);
+      document.getElementById('prof-avatar-file').value = '';
+      document.getElementById('prof-banner-file').value = '';
+      setNotice('Profil enregistré.');
+      await refreshSession(true);
+      await loadMembers();
+      await loadChat(true);
+    });
+
+    async function sendDm() {
+      const inp = document.getElementById('dm-input');
+      const content = inp.value.trim();
+      if (!selectedDmPeer || !session) return;
+
+      const rel = getDmRelation(selectedDmPeer.id);
+
+      // Si pas encore de demande, on crée la demande (avec message optionnel)
+      if (!rel) {
+        inp.value = '';
+        await createDmRequest(selectedDmPeer.id, content);
+        return;
+      }
+
+      if (rel.status !== 'accepted') {
+        return setNotice('La demande de DM doit être acceptée avant d’envoyer des messages.', true);
+      }
+
+      if (!content) return;
+      inp.value = '';
+      const { error } = await supabase.from('direct_messages').insert({
+        sender_id: session.user.id,
+        recipient_id: selectedDmPeer.id,
+        content
+      });
+      if (error) return setNotice(error.message, true);
+      await loadDmThread(true);
+    }
+
+    document.getElementById('btn-send-dm').addEventListener('click', sendDm);
+    document.getElementById('dm-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); sendDm(); }
+    });
+
+    // MODAL FICHE MEMBRE
+    document.getElementById('btn-close-modal').addEventListener('click', () => {
+      document.getElementById('member-modal').classList.add('hidden');
+      inspectedMember = null;
+    });
+    document.getElementById('member-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'member-modal') {
+        document.getElementById('member-modal').classList.add('hidden');
+        inspectedMember = null;
+      }
+    });
+    document.getElementById('modal-dm-btn').addEventListener('click', async () => {
+      if (!inspectedMember) return;
+      selectedDmPeer = inspectedMember;
+      document.getElementById('member-modal').classList.add('hidden');
+      showView('dm');
+      await loadDmRequests();
+      renderDmList();
+      await loadDmThread(true);
+    });
+    document.getElementById('modal-ban-btn').addEventListener('click', async () => {
+      if (!inspectedMember) return;
+      const uname = inspectedMember.username;
+      const reason = prompt('Motif du bannissement (optionnel) :') || '';
+      const { error } = await supabase.from('profiles').update({ is_banned: true, ban_reason: reason }).eq('id', inspectedMember.id);
+      if (error) return setNotice(error.message, true);
+      await postSystemAnnouncement(`${uname} a été banni${reason ? ` (${reason})` : ''}.`);
+      setNotice(`${uname} a été banni.`);
+      await loadMembers();
+      openMemberModal(inspectedMember.id);
+    });
+    document.getElementById('modal-unban-btn').addEventListener('click', async () => {
+      if (!inspectedMember) return;
+      const uname = inspectedMember.username;
+      const { error } = await supabase.from('profiles').update({ is_banned: false, ban_reason: '' }).eq('id', inspectedMember.id);
+      if (error) return setNotice(error.message, true);
+      await postSystemAnnouncement(`${uname} a été débanni.`);
+      setNotice(`${uname} a été débanni.`);
+      await loadMembers();
+      openMemberModal(inspectedMember.id);
+    });
+    document.getElementById('modal-role-select').addEventListener('change', async (e) => {
+      if (!inspectedMember) return;
+      const { error } = await supabase.from('profiles').update({ role: e.target.value }).eq('id', inspectedMember.id);
+      if (error) return setNotice(error.message, true);
+      setNotice('Rôle mis à jour.');
+      await loadMembers();
+      openMemberModal(inspectedMember.id);
+    });
+    document.getElementById('modal-approve-btn').addEventListener('click', async () => {
+      if (!inspectedMember) return;
+      const uname = inspectedMember.username;
+      const { error } = await supabase.from('profiles').update({ status: 'approved' }).eq('id', inspectedMember.id);
+      if (error) return setNotice(error.message, true);
+      await postSystemAnnouncement(`${uname} a rejoint le forum !`);
+      setNotice('Membre approuvé.');
+      await loadMembers();
+    });
+    document.getElementById('modal-reject-btn').addEventListener('click', async () => {
+      if (!inspectedMember) return;
+      const { error } = await supabase.from('profiles').update({ status: 'rejected' }).eq('id', inspectedMember.id);
+      if (error) return setNotice(error.message, true);
+      setNotice('Membre refusé.');
+      await loadMembers();
+    });
+
+    // ADMIN TABS & ACTIONS
+    document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.admin-sec').forEach(s => s.classList.add('hidden'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.atab).classList.remove('hidden');
+        await loadAdmin();
+      });
+    });
+
+    document.getElementById('btn-add-role').addEventListener('click', async () => {
+      const name = document.getElementById('role-name').value.trim().toLowerCase();
+      if (!name) return;
+      const { error } = await supabase.from('roles').insert({
+        name,
+        can_moderate: document.getElementById('perm-moderate').checked,
+        can_approve_users: document.getElementById('perm-approve').checked,
+        can_manage_roles: document.getElementById('perm-roles').checked,
+        can_manage_banned_words: document.getElementById('perm-words').checked,
+        can_view_logs: document.getElementById('perm-logs').checked
+      });
+      if (error) return setNotice(error.message, true);
+      document.getElementById('role-name').value = '';
+      await loadRoles();
+      await loadAdmin();
+    });
+
+    document.getElementById('btn-add-word').addEventListener('click', async () => {
+      const word = document.getElementById('banned-word-input').value.trim().toLowerCase();
+      if (!word || !session) return;
+      const { error } = await supabase.from('banned_words').insert({ word, added_by: session.user.id });
+      if (error) return setNotice(error.message, true);
+      document.getElementById('banned-word-input').value = '';
+      await loadAdmin();
+    });
+
+    wireAllButtonsForOldTablets();
+    await loadRoles();
+    await refreshSession();
+    wireAllButtonsForOldTablets();
+  </script>
+</body>
+</html>
